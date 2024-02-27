@@ -31,9 +31,9 @@ model Post {
 }
 
 model Upvote {
-    id       Int    @id @default(autoincrement())
-    authorId String @map("author_id")
-    postId   Int    @map("post_id")
+    id     Int    @id @default(autoincrement())
+    userId String @map("user_id")
+    postId Int    @map("post_id")
 
     createdAt DateTime  @default(now()) @map("created_at")
     updatedAt DateTime? @updatedAt @map("updated_at")
@@ -41,19 +41,19 @@ model Upvote {
 
     Post Post @relation(fields: [postId], references: [id])
 
-    @@index([authorId, postId])
+    @@index([userId, postId])
 }
 
 model Downvote {
-    id       Int    @id @default(autoincrement())
-    authorId String @map("author_id")
-    postId   Int?   @map("post_id")
+    id     Int    @id @default(autoincrement())
+    userId String @map("user_id")
+    postId Int    @map("post_id")
 
     createdAt DateTime  @default(now()) @map("created_at")
     updatedAt DateTime? @updatedAt @map("updated_at")
     deletedAt DateTime? @map("deleted_at")
 
-    Post Post? @relation(fields: [postId], references: [id])
+    Post Post @relation(fields: [postId], references: [id])
 
-    @@index([authorId])
+    @@index([userId])
 }
