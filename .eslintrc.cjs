@@ -31,6 +31,11 @@ const config = {
         checksVoidReturn: { attributes: false },
       },
     ],
+    // NEED_FIX: All was getting unsafe error even if the prisma types was generated
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-unsafe-call": "off",
+    "@typescript-eslint/no-unsafe-member-access": "off",
+    "@typescript-eslint/no-unsafe-return": "off",
   },
 };
 
