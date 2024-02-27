@@ -1,5 +1,7 @@
 import "server-only";
 
+import { headers } from "next/headers";
+import { cache } from "react";
 import {
   createTRPCProxyClient,
   loggerLink,
@@ -8,24 +10,21 @@ import {
 import { callProcedure } from "@trpc/server";
 import { observable } from "@trpc/server/observable";
 import { type TRPCErrorResponse } from "@trpc/server/rpc";
-import { headers } from "next/headers";
-import { cache } from "react";
+import { auth } from "@clerk/nextjs";
 
 import { appRouter, type AppRouter } from "~/server/api/root";
-import { createTRPCContext } from "~/server/api/trpc";
 import { transformer } from "./shared";
+import { createContext } from "~/server/api/context";
 
 /**
  * This wraps the `createTRPCContext` helper and provides the required context for the tRPC API when
  * handling a tRPC call from a React Server Component.
  */
-const createContext = cache(() => {
-  const heads = new Headers(headers());
-  heads.set("x-trpc-source", "rsc");
+const cachedCreateContext = cache(() => {
+  new Headers(headers()).set("x-trpc-source", "rsc");
 
-  return createTRPCContext({
-    headers: heads,
-  });
+  // TODO: retrieve the current request and pass it to `createContext`
+  return createContext();
 });
 
 export const api = createTRPCProxyClient<AppRouter>({
@@ -43,8 +42,9 @@ export const api = createTRPCProxyClient<AppRouter>({
     () =>
       ({ op }) =>
         observable((observer) => {
-          createContext()
+          cachedCreateContext()
             .then((ctx) => {
+              if (!ctx.auth) ctx.auth = auth();
               return callProcedure({
                 procedures: appRouter._def.procedures,
                 path: op.path,
