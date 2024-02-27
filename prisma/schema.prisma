@@ -20,8 +20,7 @@ model Post {
     post     Post?  @relation("PostComment", fields: [postId], references: [id])
     comments Post[] @relation("PostComment")
 
-    upvotes   Upvote[]
-    downvotes Downvote[]
+    votes Vote[]
 
     createdAt DateTime  @default(now()) @map("created_at")
     updatedAt DateTime? @updatedAt @map("updated_at")
@@ -30,10 +29,16 @@ model Post {
     @@index([authorId, postId])
 }
 
-model Upvote {
-    id     Int    @id @default(autoincrement())
-    userId String @map("user_id")
-    postId Int    @map("post_id")
+enum VoteEnum {
+    UP
+    DOWN
+}
+
+model Vote {
+    id       Int      @id @default(autoincrement())
+    userId   String   @map("user_id")
+    postId   Int      @map("post_id")
+    voteType VoteEnum @map("vote_type")
 
     createdAt DateTime  @default(now()) @map("created_at")
     updatedAt DateTime? @updatedAt @map("updated_at")
@@ -42,18 +47,4 @@ model Upvote {
     Post Post @relation(fields: [postId], references: [id])
 
     @@index([userId, postId])
-}
-
-model Downvote {
-    id     Int    @id @default(autoincrement())
-    userId String @map("user_id")
-    postId Int    @map("post_id")
-
-    createdAt DateTime  @default(now()) @map("created_at")
-    updatedAt DateTime? @updatedAt @map("updated_at")
-    deletedAt DateTime? @map("deleted_at")
-
-    Post Post @relation(fields: [postId], references: [id])
-
-    @@index([userId])
 }
