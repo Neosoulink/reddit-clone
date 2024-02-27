@@ -1,4 +1,7 @@
-import { VoteEnum } from "@prisma/client";
+import {
+  type SignedInAuthObject,
+  type SignedOutAuthObject,
+} from "@clerk/nextjs/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -9,6 +12,17 @@ import {
 } from "~/server/api/trpc";
 
 // HELPERS
+const getVotes = (auth?: SignedInAuthObject | SignedOutAuthObject) => {
+  return {
+    ...(auth?.userId
+      ? {
+          upVotes: { where: { userId: auth.userId } },
+          downVotes: { where: { userId: auth.userId } },
+        }
+      : {}),
+    _count: { select: { upVotes: true, downVotes: true } },
+  };
+};
 
 export const postRouter = createTRPCRouter({
   create: protectedProcedure
@@ -28,6 +42,7 @@ export const postRouter = createTRPCRouter({
     .query(({ ctx }) => {
       return ctx.db.post.findMany({
         orderBy: { createdAt: "desc" },
+        include: getVotes(ctx.auth),
       });
     }),
 
@@ -38,10 +53,22 @@ export const postRouter = createTRPCRouter({
       const post = await ctx.db.post.findUnique({
         where: { id: input.id },
         include: {
+          ...getVotes(ctx.auth),
           comments: {
             include: {
+              ...getVotes(ctx.auth),
               comments: {
-                include: { comments: { include: { comments: true } } },
+                include: {
+                  ...getVotes(ctx.auth),
+                  comments: {
+                    include: {
+                      ...getVotes(ctx.auth),
+                      comments: {
+                        include: getVotes(ctx.auth),
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -79,30 +106,53 @@ export const postRouter = createTRPCRouter({
     .input(
       z.object({
         postId: z.number(),
-        type: z.enum([VoteEnum.UP, VoteEnum.DOWN]),
+        type: z.enum(["UP", "DOWN"]),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const currentVote = await ctx.db.vote.findFirst({
+      const currentUpvote = await ctx.db.upVote.findFirst({
+        where: { userId: ctx.auth.userId, postId: input.postId },
+      });
+      const currentDownvote = await ctx.db.downVote.findFirst({
         where: { userId: ctx.auth.userId, postId: input.postId },
       });
 
-      if (currentVote && input.type === currentVote.voteType)
-        return ctx.db.vote.delete({ where: { id: currentVote.id } });
+      if (currentUpvote && currentDownvote)
+        await Promise.all([
+          ctx.db.upVote.delete({ where: { id: currentUpvote.id } }),
+          ctx.db.downVote.delete({ where: { id: currentDownvote.id } }),
+        ]);
 
-      if (currentVote)
-        return ctx.db.vote.update({
-          data: { voteType: input.type },
-          where: { id: currentVote.id },
+      if (currentUpvote) {
+        const res = await ctx.db.upVote.delete({
+          where: { id: currentUpvote.id },
         });
 
-      return ctx.db.vote.create({
-        data: {
-          userId: ctx.auth.userId,
-          postId: input.postId,
-          voteType: input.type,
-        },
-      });
+        if (input.type === "UP") return res;
+      }
+      if (currentDownvote) {
+        const res = await ctx.db.downVote.delete({
+          where: { id: currentDownvote.id },
+        });
+
+        if (input.type === "DOWN") return res;
+      }
+
+      if (input.type === "UP")
+        return ctx.db.upVote.create({
+          data: {
+            userId: ctx.auth.userId,
+            postId: input.postId,
+          },
+        });
+
+      if (input.type === "DOWN")
+        return ctx.db.downVote.create({
+          data: {
+            userId: ctx.auth.userId,
+            postId: input.postId,
+          },
+        });
     }),
 
   edit: protectedProcedure
@@ -128,7 +178,13 @@ export const postRouter = createTRPCRouter({
     .meta({ description: "Delete a vote" })
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const deleteVotes = ctx.db.vote.deleteMany({
+      const deleteUpvotes = ctx.db.upVote.deleteMany({
+        where: {
+          postId: input.id,
+        },
+      });
+
+      const deleteDownvotes = ctx.db.upVote.deleteMany({
         where: {
           postId: input.id,
         },
@@ -140,6 +196,6 @@ export const postRouter = createTRPCRouter({
         },
       });
 
-      return ctx.db.$transaction([deleteVotes, deletePost]);
+      return ctx.db.$transaction([deleteUpvotes, deleteDownvotes, deletePost]);
     }),
 });

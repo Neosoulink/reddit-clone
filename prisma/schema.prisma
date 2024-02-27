@@ -17,10 +17,11 @@ model Post {
     text     String @db.VarChar(2000)
     postId   Int?   @map("post_id")
 
-    post     Post?  @relation("PostComment", fields: [postId], references: [id])
-    comments Post[] @relation("PostComment")
+    post Post? @relation("PostComment", fields: [postId], references: [id])
 
-    votes Vote[]
+    comments  Post[]     @relation("PostComment")
+    upVotes   UpVote[]
+    downVotes DownVote[]
 
     createdAt DateTime  @default(now()) @map("created_at")
     updatedAt DateTime? @updatedAt @map("updated_at")
@@ -29,16 +30,24 @@ model Post {
     @@index([authorId, postId])
 }
 
-enum VoteEnum {
-    UP
-    DOWN
+model UpVote {
+    id     Int    @id @default(autoincrement())
+    userId String @map("user_id")
+    postId Int    @map("post_id")
+
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime? @updatedAt @map("updated_at")
+    deletedAt DateTime? @map("deleted_at")
+
+    Post Post @relation(fields: [postId], references: [id])
+
+    @@index([userId, postId])
 }
 
-model Vote {
-    id       Int      @id @default(autoincrement())
-    userId   String   @map("user_id")
-    postId   Int      @map("post_id")
-    voteType VoteEnum @map("vote_type")
+model DownVote {
+    id     Int    @id @default(autoincrement())
+    userId String @map("user_id")
+    postId Int    @map("post_id")
 
     createdAt DateTime  @default(now()) @map("created_at")
     updatedAt DateTime? @updatedAt @map("updated_at")
