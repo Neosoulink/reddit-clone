@@ -13,7 +13,7 @@ datasource db {
 model Post {
     id       Int    @id @default(autoincrement())
     authorId String @map("author_id")
-    title    String @db.VarChar(255)
+    title    String? @db.VarChar(255)
     text     String @db.VarChar(2000)
     postId   Int?   @map("post_id")
 

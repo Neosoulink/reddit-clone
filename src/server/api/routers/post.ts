@@ -26,8 +26,20 @@ const getVotes = (auth?: SignedInAuthObject | SignedOutAuthObject) => {
 
 export const postRouter = createTRPCRouter({
   create: protectedProcedure
-    .meta({ description: "Create a post" })
+    .meta({ description: "Create a post/comment" })
     .input(z.object({ title: z.string().min(1), text: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.post.create({
+        data: {
+          ...input,
+          authorId: ctx.auth.userId,
+        },
+      });
+    }),
+
+  createComment: protectedProcedure
+    .meta({ description: "Create a comment" })
+    .input(z.object({ postId: z.number(), text: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
       return ctx.db.post.create({
         data: {
