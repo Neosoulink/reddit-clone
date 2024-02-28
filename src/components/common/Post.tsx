@@ -124,12 +124,18 @@ export const Post: React.FC<{
           )}
         </div>
 
-        <Link href={`/post/${post.id}`}>
+        <div
+          onClick={() => router.push(`/post/${post.id}`)}
+          className="cursor-pointer"
+        >
           <CardHeader className="mb-2 flex-1 space-y-0 py-0 pl-4 pt-6">
             <CardDescription className="mb-2 flex items-center text-gray-600">
               <Link
                 href={post.author?.id ? `/user/${post.author.id}` : ""}
                 className="mr-2 rounded-full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
               >
                 <Avatar>
                   <AvatarImage
@@ -156,7 +162,7 @@ export const Post: React.FC<{
           >
             {post.text}
           </CardContent>
-        </Link>
+        </div>
       </Card>
 
       {isCommentOpen && (
