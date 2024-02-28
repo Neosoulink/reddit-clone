@@ -66,6 +66,8 @@ export const Post: React.FC<{
   };
 
   const toggleReply = () => {
+    if (!isSignedIn) return clerk.redirectToSignIn({});
+
     setIsCommentOpen(!isCommentOpen);
   };
 
