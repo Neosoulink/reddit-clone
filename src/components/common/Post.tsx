@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { formatDistance } from "date-fns";
 
 // HELPERS
 import { api } from "~/trpc/react";
 import { type api as apiServer } from "~/trpc/server";
+
+// TYPES
+import { type RecursivePostRes } from "~/server/api/routers/post";
 
 // COMPONENTS
 import {
@@ -20,10 +23,16 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Icon } from "../Icon";
+import { Comment } from "./Comment";
 
 export const Post: React.FC<{
-  post: Awaited<ReturnType<typeof apiServer.post.getAll.query>>[0];
-}> = ({ post }) => {
+  post:
+    | Awaited<ReturnType<typeof apiServer.post.getAll.query>>[0]
+    | RecursivePostRes;
+  asPostComment?: boolean;
+  displayComment?: boolean;
+  onPostAdded?: Parameters<typeof Comment>["0"]["onPostAdded"];
+}> = ({ post, asPostComment, displayComment, onPostAdded }) => {
   const { isSignedIn } = useUser();
   const clerk = useClerk();
 
@@ -37,6 +46,7 @@ export const Post: React.FC<{
       post._count = data?._count;
     },
   });
+  const [isCommentOpen, setIsCommentOpen] = useState(!!displayComment);
 
   // METHODS
   const onVote = async (
@@ -55,67 +65,102 @@ export const Post: React.FC<{
     } catch (error) {}
   };
 
+  const toggleReply = () => {
+    setIsCommentOpen(!isCommentOpen);
+  };
+
+  const onPostAddedAddon: typeof onPostAdded = (val) => {
+    onPostAdded?.(val);
+
+    setIsCommentOpen(!!displayComment);
+  };
+
   return (
-    <Card className="flex border-x-0 border-t-0 transition-colors hover:bg-gray-50">
-      <div className="flex flex-col items-center justify-center">
-        <Button
-          size="icon"
-          variant="ghost"
-          className={`h-8 w-8 cursor-pointer rounded-full stroke-gray-700 hover:stroke-indigo-600 ${post?.upVotes?.length ? "!stroke-indigo-600" : ""}`}
-          type="button"
-          disabled={voteMutation.isLoading}
-          onClick={(e) => onVote(e, "UP")}
+    <div>
+      <Card
+        className={`flex border-x-0 border-t-0 transition-colors hover:bg-gray-50 ${asPostComment ? "flex-col-reverse border-0" : ""}`}
+      >
+        <div
+          className={`flex items-center ${asPostComment ? "flex-row space-x-2" : "flex-col justify-center"}`}
         >
-          <Icon type="UP_VOTE" />
-        </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className={`h-8 w-8 cursor-pointer rounded-full stroke-gray-700 hover:stroke-indigo-600 ${post?.upVotes?.length ? "!stroke-indigo-600" : ""}`}
+            type="button"
+            disabled={voteMutation.isLoading}
+            onClick={(e) => onVote(e, "UP")}
+          >
+            <Icon type="UP_VOTE" />
+          </Button>
 
-        <span className="text-base">
-          {post._count.upVotes - post._count.downVotes}
-        </span>
+          <span className="text-base">
+            {post._count.upVotes - post._count.downVotes}
+          </span>
 
-        <Button
-          size="icon"
-          variant="ghost"
-          className={`h-8 w-8 cursor-pointer rounded-full stroke-gray-700 hover:stroke-indigo-600 ${post?.downVotes?.length ? "!stroke-indigo-600" : ""}`}
-          type="button"
-          disabled={voteMutation.isLoading}
-          onClick={(e) => onVote(e, "DOWN")}
-        >
-          <Icon type="DOWN_VOTE" />
-        </Button>
-      </div>
+          <Button
+            size="icon"
+            variant="ghost"
+            className={`h-8 w-8 cursor-pointer rounded-full stroke-gray-700 hover:stroke-indigo-600 ${post?.downVotes?.length ? "!stroke-indigo-600" : ""}`}
+            type="button"
+            disabled={voteMutation.isLoading}
+            onClick={(e) => onVote(e, "DOWN")}
+          >
+            <Icon type="DOWN_VOTE" />
+          </Button>
 
-      <Link href={`/post/${post.id}`}>
-        <CardHeader className="mb-2 flex-1 space-y-0 py-0 pl-4 pt-6">
-          <CardDescription className="mb-2 flex items-center text-gray-600">
-            <Link
-              href={post.author.id ? `/user/${post.author.id}` : ""}
-              className="mr-2 rounded-full"
+          {!!asPostComment && (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="px-1 text-gray-700 hover:text-indigo-600 data-[open=true]:text-indigo-600"
+              data-open={isCommentOpen ? "true" : "false"}
+              onClick={toggleReply}
             >
-              <Avatar>
-                <AvatarImage
-                  src={post.author?.imageUrl}
-                  alt={post.author?.username ?? "Unknown"}
-                />
-                <AvatarFallback>
-                  {(post.author?.username ?? "X")[0]}
-                </AvatarFallback>
-              </Avatar>
-            </Link>
-            Posted by {post.author?.username ?? "Unknown"}{" "}
-            {formatDistance(post.createdAt, new Date(), {
-              addSuffix: true,
-            }).replace(/about/gi, "")}
-          </CardDescription>
+              <Icon type="REPLY" className="mr-2" /> Reply
+            </Button>
+          )}
+        </div>
 
-          <CardTitle>{post.title}</CardTitle>
-        </CardHeader>
+        <Link href={`/post/${post.id}`}>
+          <CardHeader className="mb-2 flex-1 space-y-0 py-0 pl-4 pt-6">
+            <CardDescription className="mb-2 flex items-center text-gray-600">
+              <Link
+                href={post.author?.id ? `/user/${post.author.id}` : ""}
+                className="mr-2 rounded-full"
+              >
+                <Avatar>
+                  <AvatarImage
+                    src={post.author?.imageUrl}
+                    alt={post.author?.username ?? "Unknown"}
+                  />
+                  <AvatarFallback>
+                    {(post.author?.username ?? "X")[0]}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+              {!asPostComment && "Posted by"}{" "}
+              {post.author?.username ?? "Unknown"}{" "}
+              {formatDistance(post.createdAt, new Date(), {
+                addSuffix: true,
+              }).replace(/about/gi, "")}
+            </CardDescription>
 
-        <CardContent className="pb-10 pl-4 text-gray-700">
-          {post.text}
-        </CardContent>
-      </Link>
-    </Card>
+            <CardTitle>{post.title}</CardTitle>
+          </CardHeader>
+
+          <CardContent
+            className={`pl-4 text-gray-700 ${asPostComment ? "pb-3" : "pb-10"}`}
+          >
+            {post.text}
+          </CardContent>
+        </Link>
+      </Card>
+
+      {isCommentOpen && (
+        <Comment forPost={post.id} onPostAdded={onPostAddedAddon} />
+      )}
+    </div>
   );
 };
 

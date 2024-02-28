@@ -7,9 +7,18 @@ import { LoginIcon } from "./LoginIcon";
 import { UpvoteIcon } from "./UpvoteIcon";
 import { DownvoteIcon } from "./DownvoteIcon";
 import { SpinnerIcon } from "./SpinnerIcon";
-
+import { ArrowBackIcon } from "./ArrowBackIcon";
+import { ReplyIcon } from "./ReplyIcon";
 export const Icon = (props: {
-  type: "HOME" | "COMMENT" | "LOGIN" | "UP_VOTE" | "DOWN_VOTE" | "SPINNER";
+  type:
+    | "HOME"
+    | "COMMENT"
+    | "LOGIN"
+    | "UP_VOTE"
+    | "DOWN_VOTE"
+    | "SPINNER"
+    | "ARROW_BACK"
+    | "REPLY";
   className?: HTMLAttributes<HTMLSpanElement>["className"];
 }) => {
   return (
@@ -20,6 +29,8 @@ export const Icon = (props: {
       {props.type === "UP_VOTE" && <UpvoteIcon />}
       {props.type === "DOWN_VOTE" && <DownvoteIcon />}
       {props.type === "SPINNER" && <SpinnerIcon />}
+      {props.type === "ARROW_BACK" && <ArrowBackIcon />}
+      {props.type === "REPLY" && <ReplyIcon />}
     </span>
   );
 };

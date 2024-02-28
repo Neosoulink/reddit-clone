@@ -1,4 +1,5 @@
 import {
+  type User,
   clerkClient,
   type SignedInAuthObject,
   type SignedOutAuthObject,
@@ -11,7 +12,27 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
-import { type Post } from "@prisma/client";
+import { type DownVote, type UpVote, type Post } from "@prisma/client";
+
+// TYPES
+export interface RecursivePost extends ReturnType<typeof getVotes> {
+  comments?: {
+    orderBy: { createdAt: "desc" | "asc" };
+    include: RecursivePost | ReturnType<typeof getVotes>;
+  };
+}
+
+export interface RecursivePostRes extends Post {
+  _count: { upVotes: number; downVotes: number };
+  upVotes: UpVote[];
+  downVotes: DownVote[];
+  comments?: RecursivePostRes[];
+  author?: {
+    id: string;
+    username: string;
+    imageUrl: string;
+  };
+}
 
 // HELPERS
 const getVotes = (auth?: SignedInAuthObject | SignedOutAuthObject) => {
@@ -26,15 +47,32 @@ const getVotes = (auth?: SignedInAuthObject | SignedOutAuthObject) => {
   };
 };
 
+const generateNestedComments = (
+  depth: number,
+  auth?: SignedInAuthObject | SignedOutAuthObject,
+): RecursivePost => {
+  if (depth === 0) return getVotes(auth);
+
+  const include = generateNestedComments(depth - 1, auth);
+
+  return {
+    ...getVotes(auth),
+    comments: {
+      orderBy: { createdAt: "desc" },
+      include,
+    },
+  };
+};
+
 /**
  * @originalAuthor t3dotgg | https://github.com/t3dotgg
  * @source https://github.com/t3dotgg/chirp/blob/main/src/server/api/routers/posts.ts#L16
  */
 const addUserDataToPosts = async <T extends Post>(posts: T[]) => {
-  const userId = posts.map((post) => post.authorId);
+  const userIds = posts.map((post) => post.authorId);
 
   const users = await clerkClient.users.getUserList({
-    userId: userId,
+    userId: userIds,
     limit: 110,
   });
 
@@ -52,6 +90,51 @@ const addUserDataToPosts = async <T extends Post>(posts: T[]) => {
   });
 };
 
+const addUserDataToRecursivePosts = async (post: RecursivePostRes) => {
+  const userIds: string[] = [];
+
+  const postMapper = (_: RecursivePostRes) => {
+    if (
+      typeof _.authorId === "string" &&
+      !userIds.includes(_.authorId as string)
+    )
+      userIds.push(_.authorId as string);
+
+    if (_.comments && !!_.comments.length) _.comments.map(postMapper);
+
+    return;
+  };
+  postMapper(post);
+
+  const userById: Record<string, User> = {};
+  (
+    await clerkClient.users.getUserList({
+      userId: userIds,
+      limit: 110,
+    })
+  ).map((user) => {
+    userById[user.id] = user;
+    return user;
+  });
+
+  const postSetter = (_: RecursivePostRes) => {
+    const user = userById[_.authorId];
+    if (user)
+      _.author = {
+        id: user.id,
+        imageUrl: user.imageUrl,
+        username: user.username ?? user.firstName ?? "Unknown",
+      };
+
+    if (_.comments && !!_.comments.length) _.comments.map(postSetter);
+
+    return;
+  };
+  postSetter(post);
+
+  return post;
+};
+
 // Create a new ratelimiter, that allows 3 requests per 1 minute
 // const ratelimit = new Ratelimit({
 //   redis: Redis.fromEnv(),
@@ -62,28 +145,23 @@ const addUserDataToPosts = async <T extends Post>(posts: T[]) => {
 export const postRouter = createTRPCRouter({
   create: protectedProcedure
     .meta({ description: "Create a post/comment" })
-    .input(z.object({ title: z.string().min(1), text: z.string().min(1) }))
+    .input(
+      z.object({
+        title: z.string().min(1).nullable(),
+        text: z.string().min(1),
+        postId: z.number().nullable(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
-      const res = await  ctx.db.post.create({
-        data: {
-          ...input,
-          authorId: ctx.auth.userId,
-        },
-      });
+      console.log("PostID =====>", input.postId);
 
-      return (await addUserDataToPosts([res]))[0];
-    }),
-
-  createComment: protectedProcedure
-    .meta({ description: "Create a comment" })
-    .input(z.object({ postId: z.number(), text: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
       const res = await ctx.db.post.create({
         data: {
           ...input,
           authorId: ctx.auth.userId,
         },
       });
+
       return (await addUserDataToPosts([res]))[0];
     }),
 
@@ -106,25 +184,7 @@ export const postRouter = createTRPCRouter({
       const post = await ctx.db.post.findUnique({
         where: { id: input.id },
         include: {
-          ...getVotes(ctx.auth),
-          comments: {
-            include: {
-              ...getVotes(ctx.auth),
-              comments: {
-                include: {
-                  ...getVotes(ctx.auth),
-                  comments: {
-                    include: {
-                      ...getVotes(ctx.auth),
-                      comments: {
-                        include: getVotes(ctx.auth),
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
+          ...generateNestedComments(10, ctx.auth),
         },
       });
 
@@ -151,7 +211,7 @@ export const postRouter = createTRPCRouter({
 
       if (!post) throw new TRPCError({ code: "NOT_FOUND" });
 
-      return post;
+      return addUserDataToRecursivePosts(post as RecursivePostRes);
     }),
 
   vote: protectedProcedure

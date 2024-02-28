@@ -25,20 +25,23 @@ import { useUser } from "@clerk/nextjs";
 import { Textarea } from "../ui/textarea";
 import { Icon } from "../Icon";
 
-// DATA
-const formSchema = z.object({
-  title: z.string().min(2).max(255),
-  text: z.string().min(1).max(2000),
-});
-
 export const Comment: React.FC<{
+  forPost?: number;
   onPostAdded?: (
     post: Exclude<
       Awaited<ReturnType<typeof apiServer.post.create.mutate>>,
       undefined
     >,
   ) => void;
-}> = ({ onPostAdded }) => {
+}> = ({ forPost, onPostAdded }) => {
+  // DATA
+  const formSchema = z.object({
+    ...(typeof forPost === "number"
+      ? {}
+      : { title: z.string().min(2).max(255) }),
+    text: z.string().min(1).max(2000),
+  });
+
   // HOOKS
   const { user } = useUser();
   const createPost = api.post.create.useMutation({
@@ -53,13 +56,18 @@ export const Comment: React.FC<{
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
+      title: typeof forPost === "number" ? undefined : "",
       text: "",
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) =>
-    createPost.mutate(values);
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    createPost.mutate({
+      ...values,
+      title: typeof values.title === "string" ? values.title : null,
+      postId: forPost ?? null,
+    });
+  };
 
   return (
     <Form {...form}>
@@ -76,22 +84,32 @@ export const Comment: React.FC<{
             </Avatar>
 
             <div className="flex flex-1 flex-col">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        placeholder="Title of your post"
-                        className="text-base"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {!forPost && (
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        {typeof field.value === "string" && (
+                          <Input
+                            placeholder="Title of your post"
+                            className="text-base"
+                            {...{
+                              ...field,
+                              value:
+                                typeof field.value === "string"
+                                  ? field.value
+                                  : "",
+                            }}
+                          />
+                        )}
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}
@@ -100,12 +118,16 @@ export const Comment: React.FC<{
                   <FormItem className="border-b border-b-gray-200 ">
                     <FormControl>
                       <Textarea
-                        placeholder="Share your thoughts with the world!"
+                        placeholder={
+                          forPost
+                            ? "Comment your thoughts"
+                            : "Share your thoughts with the world!"
+                        }
                         className="h-12 resize-none text-base"
                         {...field}
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
@@ -121,7 +143,7 @@ export const Comment: React.FC<{
               {createPost.isLoading && (
                 <Icon type="SPINNER" className="mr-1 h-4 w-4" />
               )}
-              Post
+              {forPost ? "Comment" : "Post"}
             </Button>
           </CardFooter>
         </Card>
