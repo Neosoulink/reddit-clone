@@ -13,6 +13,7 @@ import { type RecursivePostRes } from "~/server/api/routers/post";
 // COMPONENTS
 import { Post } from "~/components/common/Post";
 import { BackButton } from "~/components/common/BackButton";
+import SkeletonLoader from "~/components/common/SkeletonLoader";
 
 const PostPage: NextPage = () => {
   noStore();
@@ -29,14 +30,6 @@ const PostPage: NextPage = () => {
 
   // HOOKS
   const { user } = useUser();
-
-  if (getRecursivePosts.isLoading || !getRecursivePosts.data)
-    return (
-      <main className="min-h-screen">
-        <BackButton />
-        Loading...
-      </main>
-    );
 
   // LOCAL COMPONENTS
   const DisplayComments = (_: { data?: RecursivePostRes[] }) => {
@@ -63,16 +56,30 @@ const PostPage: NextPage = () => {
     <main className="min-h-screen">
       <BackButton />
 
-      <Post
-        post={getRecursivePosts.data}
-        onPostAdded={async () => await getRecursivePosts.refetch()}
-        displayComment={!!user?.id}
-      />
+      {getRecursivePosts.isLoading ? (
+        <div className="space-y-4">
+          {["1", "2", "3", "4", "5"].map((n) => (
+            <SkeletonLoader key={n} />
+          ))}
+        </div>
+      ) : (
+        <>
+          {getRecursivePosts.data && (
+            <>
+              <Post
+                post={getRecursivePosts.data}
+                onPostAdded={async () => await getRecursivePosts.refetch()}
+                displayComment={!!user?.id}
+              />
 
-      <section>
-        <h2>All comments</h2>
-        {DisplayComments({ data: getRecursivePosts.data.comments })}
-      </section>
+              <section>
+                <h2>All comments</h2>
+                {DisplayComments({ data: getRecursivePosts.data.comments })}
+              </section>
+            </>
+          )}
+        </>
+      )}
     </main>
   );
 };

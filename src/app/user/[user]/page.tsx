@@ -8,6 +8,7 @@ import { api } from "~/trpc/react";
 // COMPONENTS
 import { Post } from "~/components/common/Post";
 import { BackButton } from "~/components/common/BackButton";
+import SkeletonLoader from "~/components/common/SkeletonLoader";
 
 const Home = () => {
   noStore();
@@ -25,7 +26,11 @@ const Home = () => {
       <BackButton />
 
       {getPostList.isLoading || !getPostList.data ? (
-        "Loading..."
+        <div className="space-y-4">
+          {["1", "2", "3", "4", "5"].map((n) => (
+            <SkeletonLoader key={n} />
+          ))}
+        </div>
       ) : (
         <>
           {getPostList.data?.map((item) => (
