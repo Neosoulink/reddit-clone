@@ -22,7 +22,7 @@ const MainLayout = async ({ children }: PropsWithChildren) => {
     <body
       className={`font-sans ${inter.variable} flex h-dvh flex-col overflow-hidden md:flex-row`}
     >
-      <aside className="flex w-full justify-between border-r-[1px] border-r-gray-200 p-4 shadow-md md:h-full md:w-64 md:flex-col md:justify-normal md:py-10 dark:border-r-gray-900 dark:shadow-none">
+      <aside className="flex w-full justify-between border-r-[1px] border-r-gray-200 p-4 shadow-md dark:border-r-gray-900 dark:shadow-none md:h-full md:w-64 md:flex-col md:justify-normal md:py-10">
         <div className="flex md:flex-1 md:flex-col md:space-y-1">
           <SidebarButton label="Home" iconType="HOME" url="/" />
 
@@ -33,7 +33,7 @@ const MainLayout = async ({ children }: PropsWithChildren) => {
               url={`/user/${user.id}`}
             />
           ) : (
-            <SidebarButton label="Log In" iconType="LOGIN" triggerLogin />
+            <SidebarButton label="Log In" iconType="LOGIN" url="/sign-in" />
           )}
         </div>
 
@@ -43,7 +43,7 @@ const MainLayout = async ({ children }: PropsWithChildren) => {
             className="justify-start hover:bg-gray-50 hover:text-gray-700"
           >
             <>
-              <UserButton />
+              <UserButton afterSignOutUrl="/" />
               <span className="ml-4 hidden sm:inline-block">
                 {user.firstName} {user.lastName}
               </span>

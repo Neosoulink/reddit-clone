@@ -96,9 +96,9 @@ const addUserDataToRecursivePosts = async (post: RecursivePostRes) => {
   const postMapper = (_: RecursivePostRes) => {
     if (
       typeof _.authorId === "string" &&
-      !userIds.includes(_.authorId as string)
+      !userIds.includes(_.authorId)
     )
-      userIds.push(_.authorId as string);
+      userIds.push(_.authorId);
 
     if (_.comments && !!_.comments.length) _.comments.map(postMapper);
 

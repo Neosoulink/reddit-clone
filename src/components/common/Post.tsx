@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
-import { useClerk, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { formatDistance } from "date-fns";
 
 // HELPERS
@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Icon } from "../Icon";
 import { Comment } from "./Comment";
+import { useRouter } from "next/navigation";
 
 export const Post: React.FC<{
   post:
@@ -33,10 +34,9 @@ export const Post: React.FC<{
   displayComment?: boolean;
   onPostAdded?: Parameters<typeof Comment>["0"]["onPostAdded"];
 }> = ({ post, asPostComment, displayComment, onPostAdded }) => {
-  const { isSignedIn } = useUser();
-  const clerk = useClerk();
-
   // HOOKS
+  const { isSignedIn } = useUser();
+  const router = useRouter();
   const voteMutation = api.post.vote.useMutation({
     onSuccess: async (data) => {
       if (!data) return;
@@ -56,7 +56,7 @@ export const Post: React.FC<{
     e.preventDefault();
     e.stopPropagation();
 
-    if (!isSignedIn) return clerk.redirectToSignIn({});
+    if (!isSignedIn) return router.push("/sign-in");
 
     try {
       if (voteMutation.isLoading) return;
@@ -66,7 +66,7 @@ export const Post: React.FC<{
   };
 
   const toggleReply = () => {
-    if (!isSignedIn) return clerk.redirectToSignIn({});
+    if (!isSignedIn) return router.push("/sign-in");
 
     setIsCommentOpen(!isCommentOpen);
   };
