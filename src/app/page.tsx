@@ -7,6 +7,7 @@ import { useUser } from "@clerk/nextjs";
 // COMPONENTS
 import { Post } from "~/components/common/Post";
 import { Comment } from "~/components/common/Comment";
+import SkeletonLoader from "~/components/common/SkeletonLoader";
 
 const Home = () => {
   noStore();
@@ -19,13 +20,23 @@ const Home = () => {
 
   return (
     <main className="min-h-screen">
-      {user?.id && (
-        <Comment onPostAdded={async () => await getPostList.refetch()} />
-      )}
+      {getPostList.isLoading ? (
+        <div className="space-y-4">
+          {["1", "2", "3", "4", "5"].map((n) => (
+            <SkeletonLoader key={n} />
+          ))}
+        </div>
+      ) : (
+        <>
+          {user?.id && (
+            <Comment onPostAdded={async () => await getPostList.refetch()} />
+          )}
 
-      {getPostList.data?.map((item) => (
-        <Post post={item} key={item.id.toString()} />
-      ))}
+          {getPostList.data?.map((item) => (
+            <Post post={item} key={item.id.toString()} />
+          ))}
+        </>
+      )}
     </main>
   );
 };
