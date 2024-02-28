@@ -1,17 +1,29 @@
+"use client";
+
 import { unstable_noStore as noStore } from "next/cache";
-import { api } from "~/trpc/server";
+import { api } from "~/trpc/react";
+import { useUser } from "@clerk/nextjs";
 
 // COMPONENTS
-import Post from "~/components/forum/Post";
+import { Post } from "~/components/common/Post";
+import { Comment } from "~/components/common/Comment";
 
-const Home = async () => {
+const Home = () => {
   noStore();
 
-  const postList = await api.post.getAll.query();
+  // DATA
+  const getPostList = api.post.getAll.useQuery();
+
+  // HOOKS
+  const { user } = useUser();
 
   return (
-    <main className=" bg min-h-screen">
-      {postList.map((item) => (
+    <main className="min-h-screen">
+      {user?.id && (
+        <Comment onPostAdded={async () => await getPostList.refetch()} />
+      )}
+
+      {getPostList.data?.map((item) => (
         <Post post={item} key={item.id.toString()} />
       ))}
     </main>

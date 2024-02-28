@@ -6,7 +6,7 @@ import { Inter } from "next/font/google";
 
 // COMPONENTS
 import { Button } from "~/components/ui/button";
-import SidebarButton from "../forum/SidebarButton";
+import { SidebarButton } from "~/components/common/SidebarButton";
 
 // DATA
 const inter = Inter({
@@ -52,7 +52,7 @@ const MainLayout = async ({ children }: PropsWithChildren) => {
         )}
       </aside>
 
-      <section className="max-h-full flex-1 overflow-y-auto overflow-x-hidden">
+      <section className="max-h-full flex-1 overflow-y-auto overflow-x-hidden py-10">
         <div className="mx-3 w-full md:mx-auto md:max-w-[600px]">
           {children}
         </div>

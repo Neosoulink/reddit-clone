@@ -64,24 +64,27 @@ export const postRouter = createTRPCRouter({
     .meta({ description: "Create a post/comment" })
     .input(z.object({ title: z.string().min(1), text: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.post.create({
+      const res = await  ctx.db.post.create({
         data: {
           ...input,
           authorId: ctx.auth.userId,
         },
       });
+
+      return (await addUserDataToPosts([res]))[0];
     }),
 
   createComment: protectedProcedure
     .meta({ description: "Create a comment" })
     .input(z.object({ postId: z.number(), text: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.post.create({
+      const res = await ctx.db.post.create({
         data: {
           ...input,
           authorId: ctx.auth.userId,
         },
       });
+      return (await addUserDataToPosts([res]))[0];
     }),
 
   getAll: publicProcedure
@@ -219,7 +222,7 @@ export const postRouter = createTRPCRouter({
     }),
 
   edit: protectedProcedure
-    .meta({ description: "Edit a vote" })
+    .meta({ description: "Edit a post" })
     .input(
       z.object({
         id: z.number(),
