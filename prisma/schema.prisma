@@ -6,16 +6,17 @@ generator client {
 }
 
 datasource db {
-    provider = "mysql"
-    url      = env("DATABASE_URL")
+    provider  = "postgresql"
+    url       = env("DATABASE_URL")
+    directUrl = env("DIRECT_URL")
 }
 
 model Post {
-    id       Int    @id @default(autoincrement())
-    authorId String @map("author_id")
+    id       Int     @id @default(autoincrement())
+    authorId String  @map("author_id")
     title    String? @db.VarChar(255)
-    text     String @db.VarChar(2000)
-    postId   Int?   @map("post_id")
+    text     String  @db.VarChar(2000)
+    postId   Int?    @map("post_id")
 
     post Post? @relation("PostComment", fields: [postId], references: [id])
 
