@@ -88,7 +88,7 @@ export const Post: React.FC<{
           <Button
             size="icon"
             variant="ghost"
-            className={`h-8 w-8 cursor-pointer rounded-full stroke-gray-700 hover:stroke-indigo-600 ${post?.upVotes?.length ? "!stroke-indigo-600" : ""}`}
+            className={`h-8 w-8 cursor-pointer rounded-full ${post?.upVotes?.length ? "text-indigo-600" : ""}`}
             type="button"
             disabled={voteMutation.isLoading}
             onClick={(e) => onVote(e, "UP")}
@@ -103,7 +103,7 @@ export const Post: React.FC<{
           <Button
             size="icon"
             variant="ghost"
-            className={`h-8 w-8 cursor-pointer rounded-full stroke-gray-700 hover:stroke-indigo-600 ${post?.downVotes?.length ? "!stroke-indigo-600" : ""}`}
+            className={`h-8 w-8 cursor-pointer rounded-full ${post?.downVotes?.length ? "text-indigo-600" : ""}`}
             type="button"
             disabled={voteMutation.isLoading}
             onClick={(e) => onVote(e, "DOWN")}
