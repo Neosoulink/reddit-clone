@@ -153,8 +153,6 @@ export const postRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      console.log("PostID =====>", input.postId);
-
       const res = await ctx.db.post.create({
         data: {
           ...input,
@@ -167,11 +165,15 @@ export const postRouter = createTRPCRouter({
 
   getAll: publicProcedure
     .meta({ description: "Get all posts" })
-    .query(async ({ ctx }) => {
+    .input(z.object({ byAuthorId: z.string().nullable() }).nullable())
+    .query(async ({ ctx, input }) => {
       return addUserDataToPosts(
         await ctx.db.post.findMany({
           orderBy: { createdAt: "desc" },
-          where: { postId: null },
+          where: {
+            postId: null,
+            ...(input?.byAuthorId ? { authorId: input.byAuthorId } : {}),
+          },
           include: getVotes(ctx.auth),
         }),
       );

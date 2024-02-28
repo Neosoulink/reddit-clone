@@ -1,9 +1,9 @@
 "use client";
 
 import { type NextPage } from "next";
-import Link from "next/link";
 import NextError from "next/error";
 import { unstable_noStore as noStore } from "next/cache";
+import { useParams } from "next/navigation";
 import { api } from "~/trpc/react";
 import { useUser } from "@clerk/nextjs";
 
@@ -12,20 +12,7 @@ import { type RecursivePostRes } from "~/server/api/routers/post";
 
 // COMPONENTS
 import { Post } from "~/components/common/Post";
-import { Comment } from "~/components/common/Comment";
-import { useParams } from "next/navigation";
-import { Button } from "~/components/ui/button";
-import { Icon } from "~/components/Icon";
-
-const BackButton: React.FC = () => (
-  <div className="mb-4">
-    <Button asChild variant="destructive" className="text-gray-700">
-      <Link href="/">
-        <Icon type="ARROW_BACK" className="mr-4" /> Back to posts
-      </Link>
-    </Button>
-  </div>
-);
+import { BackButton } from "~/components/common/BackButton";
 
 const PostPage: NextPage = () => {
   noStore();

@@ -12,7 +12,7 @@ const Home = () => {
   noStore();
 
   // DATA
-  const getPostList = api.post.getAll.useQuery();
+  const getPostList = api.post.getAll.useQuery(null);
 
   // HOOKS
   const { user } = useUser();
