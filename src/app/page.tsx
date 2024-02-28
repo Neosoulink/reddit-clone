@@ -1,19 +1,18 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { api } from "~/trpc/server";
-import { Button } from "~/components/ui/button";
+
+// COMPONENTS
+import Post from "~/components/forum/Post";
 
 const Home = async () => {
   noStore();
 
-  const data = await api.post.getAll.query();
-  const dataOne = await api.post.getOne.query({ id: 2 });
+  const postList = await api.post.getAll.query();
 
   return (
     <main className=" bg min-h-screen">
-      {data.map(({ id }) => (
-        <div className="" key={id.toString()}>
-          <Button>{id}</Button>
-        </div>
+      {postList.map((item) => (
+        <Post post={item} key={item.id.toString()} />
       ))}
     </main>
   );

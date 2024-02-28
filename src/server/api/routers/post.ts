@@ -1,4 +1,5 @@
 import {
+  clerkClient,
   type SignedInAuthObject,
   type SignedOutAuthObject,
 } from "@clerk/nextjs/server";
@@ -10,6 +11,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
+import { type Post } from "@prisma/client";
 
 // HELPERS
 const getVotes = (auth?: SignedInAuthObject | SignedOutAuthObject) => {
@@ -23,6 +25,39 @@ const getVotes = (auth?: SignedInAuthObject | SignedOutAuthObject) => {
     _count: { select: { upVotes: true, downVotes: true } },
   };
 };
+
+/**
+ * @originalAuthor t3dotgg | https://github.com/t3dotgg
+ * @source https://github.com/t3dotgg/chirp/blob/main/src/server/api/routers/posts.ts#L16
+ */
+const addUserDataToPosts = async <T extends Post>(posts: T[]) => {
+  const userId = posts.map((post) => post.authorId);
+
+  const users = await clerkClient.users.getUserList({
+    userId: userId,
+    limit: 110,
+  });
+
+  return posts.map((post) => {
+    const author = users.find((user) => user.id === post.authorId);
+
+    return {
+      ...post,
+      author: {
+        id: author?.id,
+        username: author?.username ?? author?.firstName,
+        imageUrl: author?.imageUrl,
+      },
+    };
+  });
+};
+
+// Create a new ratelimiter, that allows 3 requests per 1 minute
+// const ratelimit = new Ratelimit({
+//   redis: Redis.fromEnv(),
+//   limiter: Ratelimit.slidingWindow(3, "1 m"),
+//   analytics: true,
+// });
 
 export const postRouter = createTRPCRouter({
   create: protectedProcedure
@@ -51,11 +86,14 @@ export const postRouter = createTRPCRouter({
 
   getAll: publicProcedure
     .meta({ description: "Get all posts" })
-    .query(({ ctx }) => {
-      return ctx.db.post.findMany({
-        orderBy: { createdAt: "desc" },
-        include: getVotes(ctx.auth),
-      });
+    .query(async ({ ctx }) => {
+      return addUserDataToPosts(
+        await ctx.db.post.findMany({
+          orderBy: { createdAt: "desc" },
+          where: { postId: null },
+          include: getVotes(ctx.auth),
+        }),
+      );
     }),
 
   getOne: publicProcedure
@@ -136,22 +174,30 @@ export const postRouter = createTRPCRouter({
         ]);
 
       if (currentUpvote) {
-        const res = await ctx.db.upVote.delete({
+        await ctx.db.upVote.delete({
           where: { id: currentUpvote.id },
         });
 
-        if (input.type === "UP") return res;
+        if (input.type === "UP")
+          return ctx.db.post.findUnique({
+            where: { id: input.postId },
+            include: getVotes(ctx.auth),
+          });
       }
       if (currentDownvote) {
-        const res = await ctx.db.downVote.delete({
+        await ctx.db.downVote.delete({
           where: { id: currentDownvote.id },
         });
 
-        if (input.type === "DOWN") return res;
+        if (input.type === "DOWN")
+          return ctx.db.post.findUnique({
+            where: { id: input.postId },
+            include: getVotes(ctx.auth),
+          });
       }
 
       if (input.type === "UP")
-        return ctx.db.upVote.create({
+        await ctx.db.upVote.create({
           data: {
             userId: ctx.auth.userId,
             postId: input.postId,
@@ -159,12 +205,17 @@ export const postRouter = createTRPCRouter({
         });
 
       if (input.type === "DOWN")
-        return ctx.db.downVote.create({
+        await ctx.db.downVote.create({
           data: {
             userId: ctx.auth.userId,
             postId: input.postId,
           },
         });
+
+      return ctx.db.post.findUnique({
+        where: { id: input.postId },
+        include: getVotes(ctx.auth),
+      });
     }),
 
   edit: protectedProcedure
