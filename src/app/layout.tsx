@@ -19,9 +19,9 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <MainLayout>
-          <TRPCReactProvider>{children}</TRPCReactProvider>
-        </MainLayout>
+        <TRPCReactProvider>
+          <MainLayout>{children}</MainLayout>
+        </TRPCReactProvider>
       </html>
     </ClerkProvider>
   );

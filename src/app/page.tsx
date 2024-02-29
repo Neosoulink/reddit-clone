@@ -5,9 +5,10 @@ import { api } from "~/trpc/react";
 import { useUser } from "@clerk/nextjs";
 
 // COMPONENTS
+import { Page } from "~/components/layout/Page";
 import { Post } from "~/components/common/Post";
 import { Comment } from "~/components/common/Comment";
-import SkeletonLoader from "~/components/common/SkeletonLoader";
+import { SkeletonLoader } from "~/components/common/SkeletonLoader";
 
 const Home = () => {
   noStore();
@@ -19,13 +20,9 @@ const Home = () => {
   const { user } = useUser();
 
   return (
-    <main className="min-h-screen">
+    <Page>
       {getPostList.isLoading ? (
-        <div className="space-y-4">
-          {["1", "2", "3", "4", "5"].map((n) => (
-            <SkeletonLoader key={n} />
-          ))}
-        </div>
+        <SkeletonLoader />
       ) : (
         <>
           {user?.id && (
@@ -37,7 +34,7 @@ const Home = () => {
           ))}
         </>
       )}
-    </main>
+    </Page>
   );
 };
 

@@ -52,8 +52,8 @@ const MainLayout = async ({ children }: PropsWithChildren) => {
         )}
       </aside>
 
-      <section className="max-h-full flex-1 overflow-y-auto overflow-x-hidden py-10">
-        <div className="mx-3 w-full md:mx-auto md:max-w-[600px]">
+      <section className="flex h-full max-h-full flex-1 flex-col overflow-y-auto overflow-x-hidden py-10">
+        <div className="px-3 flex w-full flex-1 flex-col md:mx-auto md:max-w-[600px]">
           {children}
         </div>
       </section>
