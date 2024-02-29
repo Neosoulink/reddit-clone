@@ -68,8 +68,11 @@ const generateNestedComments = (
  * @originalAuthor t3dotgg | https://github.com/t3dotgg
  * @source https://github.com/t3dotgg/chirp/blob/main/src/server/api/routers/posts.ts#L16
  */
-const addUserDataToPosts = async <T extends Post>(posts: T[]) => {
-  const userIds = posts.map((post) => post.authorId);
+const addUserDataToPosts = async <T extends Post>(
+  posts: T[],
+  userId?: string | null,
+) => {
+  const userIds = userId ? [userId] : posts.map((post) => post.authorId);
 
   const users = await clerkClient.users.getUserList({
     userId: userIds,
@@ -94,10 +97,7 @@ const addUserDataToRecursivePosts = async (post: RecursivePostRes) => {
   const userIds: string[] = [];
 
   const postMapper = (_: RecursivePostRes) => {
-    if (
-      typeof _.authorId === "string" &&
-      !userIds.includes(_.authorId)
-    )
+    if (typeof _.authorId === "string" && !userIds.includes(_.authorId))
       userIds.push(_.authorId);
 
     if (_.comments && !!_.comments.length) _.comments.map(postMapper);
@@ -176,6 +176,7 @@ export const postRouter = createTRPCRouter({
           },
           include: getVotes(ctx.auth),
         }),
+        input?.byAuthorId,
       );
     }),
 

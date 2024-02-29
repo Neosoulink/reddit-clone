@@ -12,8 +12,8 @@ import { type RecursivePostRes } from "~/server/api/routers/post";
 
 // COMPONENTS
 import { Page } from "~/components/layout/Page";
+import { PageHeader } from "~/components/common/PageHeader";
 import { Post } from "~/components/common/Post";
-import { BackButton } from "~/components/common/BackButton";
 import { SkeletonLoader } from "~/components/common/SkeletonLoader";
 
 const PostPage: NextPage = () => {
@@ -55,7 +55,7 @@ const PostPage: NextPage = () => {
 
   return (
     <Page>
-      <BackButton />
+      <PageHeader />
 
       {getRecursivePosts.isLoading ? (
         <SkeletonLoader />
