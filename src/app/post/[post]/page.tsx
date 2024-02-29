@@ -11,9 +11,10 @@ import { useUser } from "@clerk/nextjs";
 import { type RecursivePostRes } from "~/server/api/routers/post";
 
 // COMPONENTS
+import { Page } from "~/components/layout/Page";
 import { Post } from "~/components/common/Post";
 import { BackButton } from "~/components/common/BackButton";
-import SkeletonLoader from "~/components/common/SkeletonLoader";
+import { SkeletonLoader } from "~/components/common/SkeletonLoader";
 
 const PostPage: NextPage = () => {
   noStore();
@@ -53,15 +54,11 @@ const PostPage: NextPage = () => {
   };
 
   return (
-    <main className="min-h-screen">
+    <Page>
       <BackButton />
 
       {getRecursivePosts.isLoading ? (
-        <div className="space-y-4">
-          {["1", "2", "3", "4", "5"].map((n) => (
-            <SkeletonLoader key={n} />
-          ))}
-        </div>
+        <SkeletonLoader />
       ) : (
         <>
           {getRecursivePosts.data && (
@@ -80,7 +77,7 @@ const PostPage: NextPage = () => {
           )}
         </>
       )}
-    </main>
+    </Page>
   );
 };
 

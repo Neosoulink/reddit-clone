@@ -1,6 +1,6 @@
 import React from "react";
 
-export const SkeletonLoader: React.FC = () => {
+export const SkeletonLoaderCard: React.FC = () => {
   return (
     <div className="rounded-md border px-4 py-6 shadow">
       <div className="flex animate-pulse space-x-4">
@@ -20,4 +20,14 @@ export const SkeletonLoader: React.FC = () => {
   );
 };
 
-export default SkeletonLoader;
+export const SkeletonLoader: React.FC = () => {
+  return (
+    <div className="relative flex-1 overflow-hidden">
+      <div className="absolute left-0 top-0 h-full w-full space-y-4 ">
+        {Array.from(Array(5).keys()).map((n) => (
+          <SkeletonLoaderCard key={n} />
+        ))}
+      </div>
+    </div>
+  );
+};

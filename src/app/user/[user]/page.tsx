@@ -6,9 +6,10 @@ import NextError from "next/error";
 import { api } from "~/trpc/react";
 
 // COMPONENTS
+import { Page } from "~/components/layout/Page";
 import { Post } from "~/components/common/Post";
 import { BackButton } from "~/components/common/BackButton";
-import SkeletonLoader from "~/components/common/SkeletonLoader";
+import { SkeletonLoader } from "~/components/common/SkeletonLoader";
 
 const Home = () => {
   noStore();
@@ -22,15 +23,11 @@ const Home = () => {
   const getPostList = api.post.getAll.useQuery({ byAuthorId: params.user });
 
   return (
-    <main className="min-h-screen">
+    <Page>
       <BackButton />
 
       {getPostList.isLoading || !getPostList.data ? (
-        <div className="space-y-4">
-          {["1", "2", "3", "4", "5"].map((n) => (
-            <SkeletonLoader key={n} />
-          ))}
-        </div>
+        <SkeletonLoader />
       ) : (
         <>
           {getPostList.data?.map((item) => (
@@ -38,7 +35,7 @@ const Home = () => {
           ))}
         </>
       )}
-    </main>
+    </Page>
   );
 };
 
