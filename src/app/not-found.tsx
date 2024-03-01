@@ -12,7 +12,7 @@ const NotFound = () => {
       <p className="mb-2">Could not find requested resource</p>
 
       <Button asChild variant="ghost">
-        <Link href="/" className=" flex">
+        <Link href="/" className=" flex" scroll={false}>
           <Icon type="HOME" className="mr-2" /> Return Home
         </Link>
       </Button>

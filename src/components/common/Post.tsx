@@ -69,7 +69,7 @@ export const Post: React.FC<{
     e.preventDefault();
     e.stopPropagation();
 
-    if (!isSignedIn) return router.push("/sign-in");
+    if (!isSignedIn) return router.push("/sign-in", { scroll: false });
 
     try {
       if (voteMutation.isLoading) return;
@@ -79,7 +79,7 @@ export const Post: React.FC<{
   };
 
   const toggleReply = () => {
-    if (!isSignedIn) return router.push("/sign-in");
+    if (!isSignedIn) return router.push("/sign-in", { scroll: false });
 
     setIsCommentOpen(!isCommentOpen);
   };
@@ -144,7 +144,7 @@ export const Post: React.FC<{
         <div
           onClick={() => {
             if (deletePost.isLoading) return;
-            router.push(`/post/${post.id}`);
+            router.push(`/post/${post.id}`, { scroll: false });
           }}
           className="flex-1 cursor-pointer"
         >
@@ -159,6 +159,7 @@ export const Post: React.FC<{
                       if (deletePost.isLoading) return;
                       e.stopPropagation();
                     }}
+                    scroll={false}
                   >
                     <Avatar>
                       <AvatarImage

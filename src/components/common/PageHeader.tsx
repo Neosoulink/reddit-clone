@@ -9,7 +9,7 @@ export const PageHeader: React.FC<{ label?: string }> = ({ label }) => {
   return (
     <div className="mb-4 flex flex-row items-center justify-between">
       <Button asChild variant="destructive" className="text-gray-700">
-        <Link href="/">
+        <Link href="/" scroll={false}>
           <Icon type="ARROW_BACK" className="mr-4" /> Back to posts
         </Link>
       </Button>

@@ -30,7 +30,7 @@ const Error = ({ error, reset }: PageError) => {
         </Button>
         <span>or</span>
         <Button asChild variant="ghost">
-          <Link href="/" className=" flex">
+          <Link href="/" className=" flex" scroll={false}>
             <Icon type="HOME" className="mr-2" /> Return Home
           </Link>
         </Button>

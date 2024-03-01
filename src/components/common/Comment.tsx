@@ -117,6 +117,7 @@ export const Comment: React.FC<{
                           <Input
                             placeholder="Title of your post"
                             className="text-base"
+                            autoFocus
                             {...{
                               ...field,
                               value:
@@ -140,6 +141,10 @@ export const Comment: React.FC<{
                   <FormItem className="border-b border-b-gray-200 ">
                     <FormControl>
                       <Textarea
+                        onLoad={(e) => {
+                          console.log("=======>", forPost?.postId);
+                          if (forPost?.postId) e.currentTarget.focus();
+                        }}
                         placeholder={
                           forPost
                             ? "Comment your thoughts"
