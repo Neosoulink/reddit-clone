@@ -39,9 +39,10 @@ const PostPage: NextPage = () => {
         {_.data?.map((post, id) => (
           <li key={id.toString()}>
             <Post
+              post={post}
               asPostComment
               onPostAdded={() => getRecursivePosts.refetch()}
-              post={post}
+              onPostDeleted={() => getRecursivePosts.refetch()}
             />
 
             <div className="ml-8">
@@ -65,8 +66,9 @@ const PostPage: NextPage = () => {
             <>
               <Post
                 post={getRecursivePosts.data}
-                onPostAdded={async () => await getRecursivePosts.refetch()}
                 displayComment={!!user?.id}
+                onPostAdded={async () => await getRecursivePosts.refetch()}
+                onPostDeleted={() => getRecursivePosts.refetch()}
               />
 
               <section>

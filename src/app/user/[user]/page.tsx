@@ -41,7 +41,11 @@ const Home = () => {
       ) : (
         <>
           {getPostList.data.map((item) => (
-            <Post post={item} key={item.id.toString()} />
+            <Post
+              post={item}
+              key={item.id.toString()}
+              onPostDeleted={() => getPostList.refetch()}
+            />
           ))}
         </>
       )}
