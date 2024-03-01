@@ -1,14 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useUser } from "@clerk/nextjs";
+import { type Post } from "@prisma/client";
 
 // HELPERS
 import { api } from "~/trpc/react";
-import { type api as apiServer } from "~/trpc/server";
 
 // COMPONENTS
 import { Card, CardContent, CardFooter } from "../ui/card";
@@ -27,50 +27,69 @@ import { Icon } from "../Icon";
 import { useRouter } from "next/navigation";
 
 export const Comment: React.FC<{
-  forPost?: number;
-  onPostAdded?: (
-    post: Exclude<
-      Awaited<ReturnType<typeof apiServer.post.create.mutate>>,
-      undefined
-    >,
-  ) => void;
-}> = ({ forPost, onPostAdded }) => {
+  forPost?: Post;
+  forEdition?: boolean;
+  onPostAdded?: (post: Post) => void;
+}> = ({ forPost, forEdition, onPostAdded }) => {
   // DATA
   const formSchema = z.object({
-    ...(typeof forPost === "number"
+    ...(typeof forPost?.id === "number"
       ? {}
       : { title: z.string().min(2).max(255) }),
     text: z.string().min(1).max(2000),
   });
 
+  // METHODS
+  const onSuccess = (res: Post) => {
+    if (!res || !onPostAdded) return;
+    onPostAdded(res);
+    form.reset();
+  };
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!isSignedIn) return router.push("/sign-in");
+    if (forEdition && forPost?.id) {
+      editPost.mutate({
+        ...values,
+        title: typeof values.title === "string" ? values.title : null,
+        id: forPost.id,
+      });
+      return;
+    }
+    createPost.mutate({
+      ...values,
+      title: typeof values.title === "string" ? values.title : null,
+      postId: forPost?.id ?? null,
+    });
+  };
+
   // HOOKS
   const router = useRouter();
   const { user, isSignedIn } = useUser();
   const createPost = api.post.create.useMutation({
-    onSuccess: (res) => {
-      if (!res || !onPostAdded) return;
-      onPostAdded(res);
-      form.reset();
-    },
+    onSuccess,
   });
-
-  // METHODS
+  const editPost = api.post.edit.useMutation({
+    onSuccess,
+  });
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: typeof forPost === "number" ? undefined : "",
+      title: typeof forPost?.id === "number" ? undefined : "",
       text: "",
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!isSignedIn) return router.push("/sign-in");
-    createPost.mutate({
-      ...values,
-      title: typeof values.title === "string" ? values.title : null,
-      postId: forPost ?? null,
-    });
-  };
+  useEffect(() => {
+    form.reset();
+
+    if (forEdition && forPost) {
+      if (forPost.title)
+        form.setValue("title", forPost.title as unknown as never);
+      if (forPost.text) form.setValue("text", forPost.text as unknown as never);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forEdition]);
 
   return (
     <Form {...form}>
@@ -87,7 +106,7 @@ export const Comment: React.FC<{
             </Avatar>
 
             <div className="flex flex-1 flex-col">
-              {!forPost && (
+              {!forPost?.postId && (
                 <FormField
                   control={form.control}
                   name="title"
@@ -146,7 +165,7 @@ export const Comment: React.FC<{
               {createPost.isLoading && (
                 <Icon type="SPINNER" className="mr-1 h-4 w-4" />
               )}
-              {forPost ? "Comment" : "Post"}
+              {forEdition ? "Update" : forPost ? "Comment" : "Post"}
             </Button>
           </CardFooter>
         </Card>
