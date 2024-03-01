@@ -12,7 +12,6 @@ import { api } from "~/trpc/react";
 import { Page } from "~/components/layout/Page";
 import { Post } from "~/components/common/Post";
 import { Comment } from "~/components/common/Comment";
-import { SkeletonLoader } from "~/components/common/SkeletonLoader";
 
 const Home = () => {
   noStore();
@@ -34,24 +33,18 @@ const Home = () => {
   }, [getPostList.error, getPostList.error?.data]);
 
   return (
-    <Page>
-      {getPostList.isLoading ? (
-        <SkeletonLoader />
-      ) : (
-        <>
-          {user?.id && (
-            <Comment onPostAdded={async () => await getPostList.refetch()} />
-          )}
-
-          {getPostList.data?.map((item) => (
-            <Post
-              post={item}
-              key={item.id.toString()}
-              onPostDeleted={() => getPostList.refetch()}
-            />
-          ))}
-        </>
+    <Page isLoading={getPostList.isLoading}>
+      {user?.id && (
+        <Comment onPostAdded={async () => await getPostList.refetch()} />
       )}
+
+      {getPostList.data?.map((item) => (
+        <Post
+          post={item}
+          key={item.id.toString()}
+          onPostDeleted={() => getPostList.refetch()}
+        />
+      ))}
     </Page>
   );
 };

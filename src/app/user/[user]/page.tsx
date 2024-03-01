@@ -13,7 +13,6 @@ import { api } from "~/trpc/react";
 import { Page } from "~/components/layout/Page";
 import { PageHeader } from "~/components/common/PageHeader";
 import { Post } from "~/components/common/Post";
-import { SkeletonLoader } from "~/components/common/SkeletonLoader";
 
 const Home = () => {
   noStore();
@@ -38,7 +37,7 @@ const Home = () => {
   }, [getPostList.error, getPostList.error?.data]);
 
   return (
-    <Page>
+    <Page isLoading={getPostList.isLoading || !getPostList.data}>
       <PageHeader
         label={
           getPostList.data?.length &&
@@ -49,19 +48,13 @@ const Home = () => {
         }
       />
 
-      {getPostList.isLoading || !getPostList.data ? (
-        <SkeletonLoader />
-      ) : (
-        <>
-          {getPostList.data.map((item) => (
-            <Post
-              post={item}
-              key={item.id.toString()}
-              onPostDeleted={() => getPostList.refetch()}
-            />
-          ))}
-        </>
-      )}
+      {getPostList.data?.map((item) => (
+        <Post
+          post={item}
+          key={item.id.toString()}
+          onPostDeleted={() => getPostList.refetch()}
+        />
+      ))}
     </Page>
   );
 };

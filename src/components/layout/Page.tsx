@@ -4,16 +4,20 @@ import React, { type PropsWithChildren } from "react";
 import { UserButton, useUser } from "@clerk/nextjs";
 
 // COMPONENTS
-import { Button } from "~/components/ui/button";
-import { SidebarButton } from "~/components/common/SidebarButton";
+import { Button } from "../ui/button";
+import { SidebarButton } from "../common/SidebarButton";
+import { SkeletonLoader } from "../common/SkeletonLoader";
 
-export const Page: React.FC<PropsWithChildren> = ({ children }) => {
+export const Page: React.FC<PropsWithChildren<{ isLoading?: boolean }>> = ({
+  children,
+  isLoading,
+}) => {
   // DATA
   const { user } = useUser();
 
   return (
     <>
-      <aside className="flex w-full justify-between border-r-[1px] border-r-gray-200 p-4 shadow-md dark:border-r-gray-900 dark:shadow-none md:h-full md:w-64 md:flex-col md:justify-normal md:py-10">
+      <aside className="bg-white fixed z-50 flex w-full justify-between border-r-[1px] border-r-gray-200 p-4 shadow-md dark:border-r-gray-900 dark:shadow-none md:h-dvh md:w-64 md:flex-col md:justify-normal md:py-10">
         <div className="flex md:flex-1 md:flex-col md:space-y-1">
           <SidebarButton label="Home" iconType="HOME" url="/" />
 
@@ -43,9 +47,13 @@ export const Page: React.FC<PropsWithChildren> = ({ children }) => {
         )}
       </aside>
 
-      <section className="flex h-full max-h-full flex-1 flex-col overflow-y-auto overflow-x-hidden py-10">
+      <section className="mt-20 flex flex-1 flex-col overflow-y-auto overflow-x-hidden py-10 md:ml-64 md:mt-0">
         <div className="flex w-full flex-1 flex-col px-3 md:mx-auto md:max-w-[600px]">
-          <main className="flex flex-1 flex-col">{children}</main>
+          {isLoading ? (
+            <SkeletonLoader />
+          ) : (
+            <main className="flex flex-1 flex-col">{children}</main>
+          )}
         </div>
       </section>
     </>

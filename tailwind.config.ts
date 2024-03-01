@@ -11,6 +11,7 @@ const config = {
   prefix: "",
   theme: {
     colors: {
+      white: "#fff",
       gray: {
         50: "#f9fafb",
         100: "#f3f4f6",

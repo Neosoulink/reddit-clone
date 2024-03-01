@@ -5,7 +5,7 @@ const SignUpPage = () => {
   noStore();
 
   return (
-    <main className="fixed left-0 top-0 flex h-dvh w-screen items-center justify-center bg-[white]">
+    <main className="fixed left-0 top-0 flex h-dvh w-screen items-center justify-center bg-white">
       <SignUp
         appearance={{
           elements: {

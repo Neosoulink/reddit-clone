@@ -17,7 +17,6 @@ import { type RecursivePostRes } from "~/server/api/routers/post";
 import { Page } from "~/components/layout/Page";
 import { PageHeader } from "~/components/common/PageHeader";
 import { Post } from "~/components/common/Post";
-import { SkeletonLoader } from "~/components/common/SkeletonLoader";
 
 const PostPage: NextPage = () => {
   noStore();
@@ -68,28 +67,22 @@ const PostPage: NextPage = () => {
   }, [getRecursivePosts.error, getRecursivePosts.error?.data]);
 
   return (
-    <Page>
+    <Page isLoading={getRecursivePosts.isLoading}>
       <PageHeader />
 
-      {getRecursivePosts.isLoading ? (
-        <SkeletonLoader />
-      ) : (
+      {getRecursivePosts.data && (
         <>
-          {getRecursivePosts.data && (
-            <>
-              <Post
-                post={getRecursivePosts.data}
-                displayComment={!!user?.id}
-                onPostAdded={async () => await getRecursivePosts.refetch()}
-                onPostDeleted={() => getRecursivePosts.refetch()}
-              />
+          <Post
+            post={getRecursivePosts.data}
+            displayComment={!!user?.id}
+            onPostAdded={async () => await getRecursivePosts.refetch()}
+            onPostDeleted={() => getRecursivePosts.refetch()}
+          />
 
-              <section>
-                <h2>All comments</h2>
-                {DisplayComments({ data: getRecursivePosts.data.comments })}
-              </section>
-            </>
-          )}
+          <section>
+            <h2>All comments</h2>
+            {DisplayComments({ data: getRecursivePosts.data.comments })}
+          </section>
         </>
       )}
     </Page>

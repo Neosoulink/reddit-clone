@@ -1,4 +1,7 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { mathClamp } from "~/lib/utils";
 
 export const SkeletonLoaderCard: React.FC = () => {
   return (
@@ -21,13 +24,20 @@ export const SkeletonLoaderCard: React.FC = () => {
 };
 
 export const SkeletonLoader: React.FC = () => {
+  const [cardToDisplay, setCardToDisplay] = useState(0);
+
+  useEffect(() => {
+    if (window) {
+      const max = window.innerHeight / 210;
+      setCardToDisplay(mathClamp(max, 1, max) + 1);
+    }
+  }, []);
+
   return (
-    <div className="relative flex-1 overflow-hidden">
-      <div className="absolute left-0 top-0 h-full w-full space-y-4 ">
-        {Array.from(Array(5).keys()).map((n) => (
-          <SkeletonLoaderCard key={n} />
-        ))}
-      </div>
+    <div className="relative flex-1 space-y-4 overflow-hidden">
+      {Array.from(Array(Math.round(cardToDisplay)).keys()).map((n) => (
+        <SkeletonLoaderCard key={n} />
+      ))}
     </div>
   );
 };

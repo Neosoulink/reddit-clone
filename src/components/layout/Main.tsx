@@ -12,7 +12,7 @@ const inter = Inter({
 const MainLayout = async ({ children }: PropsWithChildren) => {
   return (
     <body
-      className={`font-sans ${inter.variable} relative flex h-dvh flex-col overflow-hidden md:flex-row`}
+      className={`font-sans ${inter.variable} min:h-dvh relative flex flex-col overflow-x-hidden md:flex-row`}
     >
       {children}
     </body>
