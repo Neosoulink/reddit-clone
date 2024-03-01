@@ -311,7 +311,7 @@ export const postRouter = createTRPCRouter({
         },
       });
 
-      const deleteDownvotes = ctx.db.upVote.deleteMany({
+      const deleteDownvotes = ctx.db.downVote.deleteMany({
         where: {
           postId: input.id,
         },
