@@ -75,7 +75,7 @@ export const Post: React.FC<{
       if (voteMutation.isLoading) return;
 
       voteMutation.mutate({ type, postId: post.id });
-    } catch (error) {}
+    } catch (_) {}
   };
 
   const toggleReply = () => {

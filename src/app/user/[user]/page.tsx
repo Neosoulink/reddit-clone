@@ -3,8 +3,11 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { useParams } from "next/navigation";
 import NextError from "next/error";
-import { api } from "~/trpc/react";
+import { useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
+
+// HELPERS
+import { api } from "~/trpc/react";
 
 // COMPONENTS
 import { Page } from "~/components/layout/Page";
@@ -23,6 +26,16 @@ const Home = () => {
     throw new NextError({ title: "Not found", statusCode: 404 });
 
   const getPostList = api.post.getAll.useQuery({ byAuthorId: params.user });
+
+  useEffect(() => {
+    if (getPostList.error) {
+      throw new NextError({
+        title: getPostList.error.message ?? "Something went wrong!",
+        statusCode: getPostList.error.data?.httpStatus ?? 500,
+        withDarkMode: false,
+      });
+    }
+  }, [getPostList.error, getPostList.error?.data]);
 
   return (
     <Page>

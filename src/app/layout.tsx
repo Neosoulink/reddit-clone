@@ -1,5 +1,7 @@
 import { type Viewport, type Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+
+// HELPER
 import { TRPCReactProvider } from "~/trpc/react";
 
 // COMPONENTS

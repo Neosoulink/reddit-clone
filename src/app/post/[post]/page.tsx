@@ -3,9 +3,12 @@
 import { type NextPage } from "next";
 import NextError from "next/error";
 import { unstable_noStore as noStore } from "next/cache";
+import { useEffect } from "react";
 import { useParams } from "next/navigation";
-import { api } from "~/trpc/react";
 import { useUser } from "@clerk/nextjs";
+
+// HELPERS
+import { api } from "~/trpc/react";
 
 // TYPES
 import { type RecursivePostRes } from "~/server/api/routers/post";
@@ -53,6 +56,16 @@ const PostPage: NextPage = () => {
       </ul>
     );
   };
+
+  useEffect(() => {
+    if (getRecursivePosts.error) {
+      throw new NextError({
+        title: getRecursivePosts.error.message ?? "Something went wrong!",
+        statusCode: getRecursivePosts.error.data?.httpStatus ?? 500,
+        withDarkMode: false,
+      });
+    }
+  }, [getRecursivePosts.error, getRecursivePosts.error?.data]);
 
   return (
     <Page>

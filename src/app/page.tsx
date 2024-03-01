@@ -1,8 +1,12 @@
 "use client";
 
 import { unstable_noStore as noStore } from "next/cache";
-import { api } from "~/trpc/react";
+import NextError from "next/error";
+import { useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
+
+// HELPERS
+import { api } from "~/trpc/react";
 
 // COMPONENTS
 import { Page } from "~/components/layout/Page";
@@ -18,6 +22,16 @@ const Home = () => {
 
   // HOOKS
   const { user } = useUser();
+
+  useEffect(() => {
+    if (getPostList.error) {
+      throw new NextError({
+        title: getPostList.error.message ?? "Something went wrong!",
+        statusCode: getPostList.error.data?.httpStatus ?? 500,
+        withDarkMode: false,
+      });
+    }
+  }, [getPostList.error, getPostList.error?.data]);
 
   return (
     <Page>
