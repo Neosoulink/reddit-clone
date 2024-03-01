@@ -98,49 +98,47 @@ export const Post: React.FC<{
         className={`flex border-x-0 border-t-0 transition-colors hover:bg-gray-50 aria-disabled:pointer-events-none aria-disabled:opacity-80 ${asPostComment ? "flex-col-reverse border-0" : ""}`}
       >
         {!isEditing && (
-          <>
-            <div
-              className={`flex items-center ${asPostComment ? "flex-row space-x-2" : "flex-col justify-center"}`}
+          <div
+            className={`flex items-center ${asPostComment ? "flex-row space-x-2" : "flex-col justify-center"}`}
+          >
+            <Button
+              size="icon"
+              variant="ghost"
+              className={`h-8 w-8 cursor-pointer rounded-full ${post?.upVotes?.length ? "text-indigo-600" : ""}`}
+              type="button"
+              disabled={voteMutation.isLoading}
+              onClick={(e) => onVote(e, "UP")}
             >
+              <Icon type="UP_VOTE" />
+            </Button>
+
+            <span className="text-base">
+              {post._count.upVotes - post._count.downVotes}
+            </span>
+
+            <Button
+              size="icon"
+              variant="ghost"
+              className={`h-8 w-8 cursor-pointer rounded-full ${post?.downVotes?.length ? "text-indigo-600" : ""}`}
+              type="button"
+              disabled={voteMutation.isLoading}
+              onClick={(e) => onVote(e, "DOWN")}
+            >
+              <Icon type="DOWN_VOTE" />
+            </Button>
+
+            {!!asPostComment && (
               <Button
-                size="icon"
-                variant="ghost"
-                className={`h-8 w-8 cursor-pointer rounded-full ${post?.upVotes?.length ? "text-indigo-600" : ""}`}
-                type="button"
-                disabled={voteMutation.isLoading}
-                onClick={(e) => onVote(e, "UP")}
+                variant="destructive"
+                size="sm"
+                className="px-1 text-gray-700 hover:text-indigo-600 data-[open=true]:text-indigo-600"
+                data-open={isCommentOpen ? "true" : "false"}
+                onClick={toggleReply}
               >
-                <Icon type="UP_VOTE" />
+                <Icon type="REPLY" className="mr-2" /> Reply
               </Button>
-
-              <span className="text-base">
-                {post._count.upVotes - post._count.downVotes}
-              </span>
-
-              <Button
-                size="icon"
-                variant="ghost"
-                className={`h-8 w-8 cursor-pointer rounded-full ${post?.downVotes?.length ? "text-indigo-600" : ""}`}
-                type="button"
-                disabled={voteMutation.isLoading}
-                onClick={(e) => onVote(e, "DOWN")}
-              >
-                <Icon type="DOWN_VOTE" />
-              </Button>
-
-              {!!asPostComment && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="px-1 text-gray-700 hover:text-indigo-600 data-[open=true]:text-indigo-600"
-                  data-open={isCommentOpen ? "true" : "false"}
-                  onClick={toggleReply}
-                >
-                  <Icon type="REPLY" className="mr-2" /> Reply
-                </Button>
-              )}
-            </div>
-          </>
+            )}
+          </div>
         )}
 
         <div
@@ -152,7 +150,7 @@ export const Post: React.FC<{
         >
           <CardHeader className="mb-2 flex-1 space-y-0 py-0 pl-4 pt-6">
             <CardDescription className="mb-2 flex w-full items-center justify-between text-gray-600">
-              <div className="flex">
+              <span className="flex">
                 {!isEditing && (
                   <Link
                     href={post.author?.id ? `/user/${post.author.id}` : ""}
@@ -184,10 +182,10 @@ export const Post: React.FC<{
                 post.updatedAt.toString() !== post.createdAt.toString()
                   ? "(edited)"
                   : ""}
-              </div>
+              </span>
 
               {connectedUser?.id === post.authorId && (
-                <div className="flex items-center space-x-2 ">
+                <span className="flex items-center space-x-2 ">
                   {isEditing && (
                     <Button
                       variant="ghost"
@@ -242,7 +240,7 @@ export const Post: React.FC<{
                       </Button>
                     </>
                   )}
-                </div>
+                </span>
               )}
             </CardDescription>
 
