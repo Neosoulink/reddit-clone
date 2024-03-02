@@ -63,6 +63,10 @@ export const Comment: React.FC<{
     });
   };
 
+  const onClickForm = (e: React.MouseEvent<HTMLFormElement, MouseEvent>) => {
+    e.stopPropagation();
+  };
+
   // HOOKS
   const router = useRouter();
   const { user, isSignedIn } = useUser();
@@ -93,7 +97,7 @@ export const Comment: React.FC<{
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={form.handleSubmit(onSubmit)} onClick={onClickForm}>
         <Card className="p-4 shadow-lg">
           <CardContent className="mb-0 flex px-0 pb-3">
             <Avatar className="mr-2 mt-2">

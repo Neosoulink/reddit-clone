@@ -86,7 +86,10 @@ export const Post: React.FC<{
     } catch (_) {}
   };
 
-  const toggleReply = () => {
+  const toggleReply = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (!isSignedIn) return router.push("/sign-in", { scroll: false });
 
     setIsCommentOpen(!isCommentOpen);
@@ -97,6 +100,40 @@ export const Post: React.FC<{
     setIsEditing(false);
 
     setIsCommentOpen(!!displayComment);
+  };
+
+  const onClickContent = () => {
+    if (!clickable || deletePost.isLoading) return;
+    router.push(`/post/${post.id}`, { scroll: false });
+  };
+
+  const onClickAvatar = (
+    e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
+  ) => {
+    if (deletePost.isLoading) return;
+    e.stopPropagation();
+  };
+
+  const onClickEdit = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    e.stopPropagation();
+    setIsCommentOpen(false);
+    setIsEditing(true);
+  };
+
+  const onClickCancel = (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+  ) => {
+    e.stopPropagation();
+    setIsEditing(false);
+  };
+
+  const onClickDelete = (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+  ) => {
+    e.stopPropagation();
+    setIsCommentOpen(false);
+    setIsEditing(false);
+    deletePost.mutate({ id: post.id });
   };
 
   return (
@@ -112,7 +149,7 @@ export const Post: React.FC<{
             <Button
               size="icon"
               variant="ghost"
-              className={`h-8 w-8 cursor-pointer rounded-full ${post?.upVotes?.length ? "text-indigo-500" : ""}`}
+              className={`h-8 w-8 cursor-pointer rounded-full ${post?.upVotes?.length ? "text-indigo-500 dark:text-indigo-500" : ""}`}
               type="button"
               disabled={voteMutation.isLoading}
               onClick={(e) => onVote(e, "UP")}
@@ -127,7 +164,7 @@ export const Post: React.FC<{
             <Button
               size="icon"
               variant="ghost"
-              className={`h-8 w-8 cursor-pointer rounded-full ${post?.downVotes?.length ? "text-indigo-500" : ""}`}
+              className={`h-8 w-8 cursor-pointer rounded-full ${post?.downVotes?.length ? "text-indigo-500 dark:text-indigo-500" : ""}`}
               type="button"
               disabled={voteMutation.isLoading}
               onClick={(e) => onVote(e, "DOWN")}
@@ -149,13 +186,7 @@ export const Post: React.FC<{
           </div>
         )}
 
-        <div
-          onClick={() => {
-            if (!clickable || deletePost.isLoading) return;
-            router.push(`/post/${post.id}`, { scroll: false });
-          }}
-          className="flex-1 cursor-pointer"
-        >
+        <div onClick={onClickContent} className="flex-1 cursor-pointer">
           <CardHeader className="mb-2 flex-1 space-y-0 px-4 py-0 pt-6">
             <CardDescription className="mb-2 flex w-full items-center justify-between text-gray-600">
               <span className="flex">
@@ -163,10 +194,7 @@ export const Post: React.FC<{
                   <Link
                     href={post.author?.id ? `/user/${post.author.id}` : ""}
                     className="mr-2 rounded-full"
-                    onClick={(e) => {
-                      if (deletePost.isLoading) return;
-                      e.stopPropagation();
-                    }}
+                    onClick={onClickAvatar}
                     scroll={false}
                   >
                     <Avatar>
@@ -201,10 +229,7 @@ export const Post: React.FC<{
                       size="icon"
                       className="h-6 w-6 cursor-pointer rounded-full"
                       disabled={deletePost.isLoading}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsEditing(false);
-                      }}
+                      onClick={onClickCancel}
                     >
                       <XIcon size={16} />
                     </Button>
@@ -217,11 +242,7 @@ export const Post: React.FC<{
                         size="icon"
                         className="h-6 w-6 cursor-pointer rounded-full"
                         disabled={deletePost.isLoading}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsCommentOpen(false);
-                          setIsEditing(true);
-                        }}
+                        onClick={onClickEdit}
                       >
                         <Edit3Icon size={16} />
                       </Button>
@@ -231,12 +252,7 @@ export const Post: React.FC<{
                         size="icon"
                         className="h-6 w-6 cursor-pointer rounded-full hover:bg-red-600/15 dark:hover:bg-red-600/15"
                         disabled={deletePost.isLoading}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsCommentOpen(false);
-                          setIsEditing(false);
-                          deletePost.mutate({ id: post.id });
-                        }}
+                        onClick={onClickDelete}
                       >
                         {deletePost.isLoading ? (
                           <Icon
