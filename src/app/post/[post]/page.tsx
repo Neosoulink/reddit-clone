@@ -106,7 +106,13 @@ const PostPage: NextPage = () => {
       {getRecursivePosts.data && (
         <>
           <Post
-            post={getRecursivePosts.data}
+            post={{
+              ...getRecursivePosts.data.post,
+              author:
+                getRecursivePosts.data.users[
+                  getRecursivePosts.data.post.authorId
+                ],
+            }}
             displayComment={!!currentUser?.id}
             onPostAdded={onPostAdded}
             onPostDeleted={onPostDeleted}
@@ -114,7 +120,7 @@ const PostPage: NextPage = () => {
 
           <section className="pt-10">
             <h2 className="dark:text-gray-50">All comments</h2>
-            {DisplayComments({ data: getRecursivePosts.data.comments })}
+            {DisplayComments({ data: getRecursivePosts.data.post.comments })}
           </section>
         </>
       )}

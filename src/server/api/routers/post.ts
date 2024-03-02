@@ -108,33 +108,40 @@ const addUserDataToRecursivePosts = async (post: RecursivePostRes) => {
   };
   postMapper(post);
 
-  const userById: Record<string, User> = {};
+  const users: Record<
+    string,
+    Pick<User, "id" | "username" | "imageUrl"> & { username: string }
+  > = {};
   (
     await clerkClient.users.getUserList({
       userId: userIds,
       limit: 110,
     })
   ).map((user) => {
-    userById[user.id] = user;
+    users[user.id] = {
+      id: user.id,
+      imageUrl: user.imageUrl,
+      username: user.username ?? user.firstName ?? "Unknown",
+    };
     return user;
   });
 
-  const postSetter = (_: RecursivePostRes) => {
-    const user = userById[_.authorId];
-    if (user)
-      _.author = {
-        id: user.id,
-        imageUrl: user.imageUrl,
-        username: user.username ?? user.firstName ?? "Unknown",
-      };
+  // const postSetter = (_: RecursivePostRes) => {
+  //   const user = users[_.authorId];
+  //   if (user)
+  //     _.author = {
+  //       id: user.id,
+  //       imageUrl: user.imageUrl,
+  //       username: user.username ?? user.firstName ?? "Unknown",
+  //     };
 
-    if (_.comments && !!_.comments.length) _.comments.map(postSetter);
+  //   if (_.comments && !!_.comments.length) _.comments.map(postSetter);
 
-    return;
-  };
-  postSetter(post);
+  //   return;
+  // };
+  // postSetter(post);
 
-  return post;
+  return { post, users };
 };
 
 /**
