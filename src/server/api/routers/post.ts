@@ -123,24 +123,7 @@ const addUserDataToRecursivePosts = async (post: RecursivePostRes) => {
       imageUrl: user.imageUrl,
       username: user.username ?? user.firstName ?? "Unknown",
     };
-    return user;
   });
-
-  // const postSetter = (_: RecursivePostRes) => {
-  //   const user = users[_.authorId];
-  //   if (user)
-  //     _.author = {
-  //       id: user.id,
-  //       imageUrl: user.imageUrl,
-  //       username: user.username ?? user.firstName ?? "Unknown",
-  //     };
-
-  //   if (_.comments && !!_.comments.length) _.comments.map(postSetter);
-
-  //   return;
-  // };
-  // postSetter(post);
-
   return { post, users };
 };
 
@@ -191,6 +174,7 @@ export const postRouter = createTRPCRouter({
           where: {
             postId: null,
             ...(input?.byAuthorId ? { authorId: input.byAuthorId } : {}),
+            deletedAt: null,
           },
           include: getVotes(ctx.auth),
         }),
@@ -203,7 +187,7 @@ export const postRouter = createTRPCRouter({
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
       const post = await ctx.db.post.findUnique({
-        where: { id: input.id },
+        where: { id: input.id, deletedAt: null },
         include: {
           ...generateNestedComments(10, ctx.auth),
         },
@@ -325,24 +309,24 @@ export const postRouter = createTRPCRouter({
     .meta({ description: "Delete a vote" })
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const deleteUpvotes = ctx.db.upVote.deleteMany({
-        where: {
-          postId: input.id,
-        },
-      });
-
-      const deleteDownvotes = ctx.db.downVote.deleteMany({
-        where: {
-          postId: input.id,
-        },
-      });
-
-      const deletePost = ctx.db.post.delete({
+      return ctx.db.post.delete({
         where: {
           id: input.id,
         },
       });
+    }),
 
-      return ctx.db.$transaction([deleteUpvotes, deleteDownvotes, deletePost]);
+  softDelete: protectedProcedure
+    .meta({ description: "Soft delete a vote" })
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.post.update({
+        where: {
+          id: input.id,
+        },
+        data: {
+          deletedAt: new Date(),
+        },
+      });
     }),
 });
