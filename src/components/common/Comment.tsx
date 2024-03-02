@@ -93,7 +93,7 @@ export const Comment: React.FC<{
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="mb-10">
+      <form onSubmit={form.handleSubmit(onSubmit)}>
         <Card className="p-4 shadow-lg">
           <CardContent className="mb-0 flex px-0 pb-3">
             <Avatar className="mr-2 mt-2">
@@ -138,11 +138,10 @@ export const Comment: React.FC<{
                 control={form.control}
                 name="text"
                 render={({ field }) => (
-                  <FormItem className="border-b border-b-gray-200 ">
+                  <FormItem className="border-b border-b-gray-200 dark:border-b-gray-700">
                     <FormControl>
                       <Textarea
                         onLoad={(e) => {
-                          console.log("=======>", forPost?.postId);
                           if (forPost?.postId) e.currentTarget.focus();
                         }}
                         placeholder={

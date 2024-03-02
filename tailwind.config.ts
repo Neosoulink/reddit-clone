@@ -12,6 +12,7 @@ const config = {
   theme: {
     colors: {
       white: "#fff",
+      transparent: "transparent",
       gray: {
         50: "#f9fafb",
         100: "#f3f4f6",
@@ -44,6 +45,7 @@ const config = {
       green: {
         500: "#22c55e",
       },
+      dark: "#121212",
     },
     container: {
       center: true,

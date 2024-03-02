@@ -6,7 +6,7 @@ import { Button } from "~/components/ui/button";
 
 const NotFound = () => {
   return (
-    <div className="absolute left-0 top-0 flex h-dvh w-dvw flex-col items-center justify-center space-y-2 bg-gray-50 text-center">
+    <div className="absolute left-0 top-0 flex h-dvh w-dvw flex-col items-center justify-center space-y-2 text-center">
       <h2 className="text-3xl">Not Found</h2>
 
       <p className="mb-2">Could not find requested resource</p>

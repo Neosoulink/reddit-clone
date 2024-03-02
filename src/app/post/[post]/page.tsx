@@ -79,8 +79,8 @@ const PostPage: NextPage = () => {
             onPostDeleted={() => getRecursivePosts.refetch()}
           />
 
-          <section>
-            <h2>All comments</h2>
+          <section className="pt-10">
+            <h2 className="dark:text-gray-50">All comments</h2>
             {DisplayComments({ data: getRecursivePosts.data.comments })}
           </section>
         </>

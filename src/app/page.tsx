@@ -34,9 +34,11 @@ const Home = () => {
 
   return (
     <Page isLoading={getPostList.isLoading}>
-      {user?.id && (
-        <Comment onPostAdded={async () => await getPostList.refetch()} />
-      )}
+      <div className="mb-10">
+        {user?.id && (
+          <Comment onPostAdded={async () => await getPostList.refetch()} />
+        )}
+      </div>
 
       {getPostList.data?.map((item) => (
         <Post

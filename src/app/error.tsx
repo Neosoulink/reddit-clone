@@ -14,7 +14,7 @@ export interface PageError {
 
 const Error = ({ error, reset }: PageError) => {
   return (
-    <div className="absolute left-0 top-0 flex h-dvh w-dvw flex-col items-center justify-center space-y-2 bg-gray-50 text-center">
+    <div className="absolute left-0 top-0 flex h-dvh w-dvw flex-col items-center justify-center space-y-2 text-center">
       <h2 className="text-3xl">
         {typeof error.message === "string"
           ? error.message

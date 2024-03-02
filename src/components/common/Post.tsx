@@ -95,7 +95,7 @@ export const Post: React.FC<{
     <div>
       <Card
         aria-disabled={deletePost.isLoading || isDeleted}
-        className={`flex border-x-0 border-t-0 transition-colors hover:bg-gray-50 aria-disabled:pointer-events-none aria-disabled:opacity-80 ${asPostComment ? "flex-col-reverse border-0" : ""}`}
+        className={`flex border-x-0 border-t-0 px-1 transition-colors hover:bg-gray-50 aria-disabled:pointer-events-none aria-disabled:opacity-80 ${asPostComment ? "flex-col-reverse border-0" : ""}`}
       >
         {!isEditing && (
           <div
@@ -104,7 +104,7 @@ export const Post: React.FC<{
             <Button
               size="icon"
               variant="ghost"
-              className={`h-8 w-8 cursor-pointer rounded-full ${post?.upVotes?.length ? "text-indigo-600" : ""}`}
+              className={`h-8 w-8 cursor-pointer rounded-full ${post?.upVotes?.length ? "text-indigo-500" : ""}`}
               type="button"
               disabled={voteMutation.isLoading}
               onClick={(e) => onVote(e, "UP")}
@@ -119,7 +119,7 @@ export const Post: React.FC<{
             <Button
               size="icon"
               variant="ghost"
-              className={`h-8 w-8 cursor-pointer rounded-full ${post?.downVotes?.length ? "text-indigo-600" : ""}`}
+              className={`h-8 w-8 cursor-pointer rounded-full ${post?.downVotes?.length ? "text-indigo-500" : ""}`}
               type="button"
               disabled={voteMutation.isLoading}
               onClick={(e) => onVote(e, "DOWN")}
@@ -131,7 +131,7 @@ export const Post: React.FC<{
               <Button
                 variant="destructive"
                 size="sm"
-                className="px-1 text-gray-700 hover:text-indigo-600 data-[open=true]:text-indigo-600"
+                className="dark:data-[open=true]:text-indigo-500 px-1 text-gray-700 hover:text-indigo-600 dark:hover:text-indigo-500 [open=true]:text-indigo-600"
                 data-open={isCommentOpen ? "true" : "false"}
                 onClick={toggleReply}
               >
@@ -148,7 +148,7 @@ export const Post: React.FC<{
           }}
           className="flex-1 cursor-pointer"
         >
-          <CardHeader className="mb-2 flex-1 space-y-0 py-0 pl-4 pt-6">
+          <CardHeader className="mb-2 flex-1 space-y-0 px-4 py-0 pt-6">
             <CardDescription className="mb-2 flex w-full items-center justify-between text-gray-600">
               <span className="flex">
                 {!isEditing && (
@@ -221,7 +221,7 @@ export const Post: React.FC<{
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 cursor-pointer rounded-full hover:bg-red-600/15"
+                        className="h-6 w-6 cursor-pointer rounded-full hover:bg-red-600/15 dark:hover:bg-red-600/15"
                         disabled={deletePost.isLoading}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -249,9 +249,7 @@ export const Post: React.FC<{
           </CardHeader>
 
           {!isEditing && (
-            <CardContent
-              className={`pl-4 text-gray-700 ${asPostComment ? "pb-3" : "pb-10"}`}
-            >
+            <CardContent className={`pl-4 ${asPostComment ? "pb-3" : "pb-10"}`}>
               {post.text}
             </CardContent>
           )}
