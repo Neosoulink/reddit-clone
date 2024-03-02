@@ -28,7 +28,7 @@ const SignUpPage = () => {
 
   return (
     <main
-      className="fixed left-0 top-0 flex h-dvh w-screen items-center justify-center"
+      className="flex h-dvh w-screen items-center justify-center"
       ref={mainRef}
     >
       <SignUp
