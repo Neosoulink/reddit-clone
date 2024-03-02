@@ -74,7 +74,7 @@ export const Page: React.FC<PropsWithChildren<{ isLoading?: boolean }>> = ({
         </div>
       </div>
 
-      <section className="mt-20 flex flex-1 flex-col overflow-y-auto overflow-x-hidden py-10 md:ml-64 md:mt-0">
+      <section className="mt-14 flex flex-1 flex-col overflow-y-auto overflow-x-hidden py-10 md:ml-64 md:mt-0">
         <div className="flex w-full flex-1 flex-col px-3 md:mx-auto md:max-w-[600px]">
           {isLoading ? (
             <SkeletonLoader />
