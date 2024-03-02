@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import React, { useContext, useState } from "react";
+import NextError from "next/error";
+import React, { useContext, useEffect, useState } from "react";
 import { formatDistance } from "date-fns";
 import { Edit3Icon, Trash2Icon, XIcon } from "lucide-react";
 
@@ -138,6 +139,15 @@ export const Post: React.FC<{
     setIsEditing(false);
     deletePost.mutate({ id: post.id });
   };
+
+  useEffect(() => {
+    if (deletePost.error) {
+      throw new NextError({
+        title: deletePost.error.message ?? "Something went wrong!",
+        statusCode: deletePost.error.data?.httpStatus ?? 500,
+      });
+    }
+  }, [deletePost.error, deletePost.error?.data]);
 
   return (
     <div>

@@ -6,6 +6,8 @@ import {
 } from "@clerk/nextjs/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
 import {
   createTRPCRouter,
@@ -135,12 +137,18 @@ const addUserDataToRecursivePosts = async (post: RecursivePostRes) => {
   return post;
 };
 
-// Create a new ratelimiter, that allows 3 requests per 1 minute
-// const ratelimit = new Ratelimit({
-//   redis: Redis.fromEnv(),
-//   limiter: Ratelimit.slidingWindow(3, "1 m"),
-//   analytics: true,
-// });
+/**
+ * @originalAuthor t3dotgg | https://github.com/t3dotgg
+ * @source https://github.com/t3dotgg/chirp/blob/main/src/server/api/routers/posts.ts#L16
+ *
+ * @description Create a new ratelimiter, that allows 3 requests per 1 minute
+ */
+const ratelimiter = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(3, "1 m"),
+  analytics: true,
+  prefix: "@upstash/ratelimit/reddit-clone",
+});
 
 export const postRouter = createTRPCRouter({
   create: protectedProcedure
@@ -153,6 +161,11 @@ export const postRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const rateRes = await ratelimiter.limit(ctx.auth.userId);
+      if (!rateRes.success)
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+        });
       return await ctx.db.post.create({
         data: {
           ...input,
