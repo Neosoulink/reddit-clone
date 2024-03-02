@@ -18,7 +18,7 @@ model Post {
     text     String  @db.VarChar(2000)
     postId   Int?    @map("post_id")
 
-    post Post? @relation("PostComment", fields: [postId], references: [id])
+    post Post? @relation("PostComment", fields: [postId], references: [id], onDelete: Cascade)
 
     comments  Post[]     @relation("PostComment")
     upVotes   UpVote[]
@@ -40,7 +40,7 @@ model UpVote {
     updatedAt DateTime? @updatedAt @map("updated_at")
     deletedAt DateTime? @map("deleted_at")
 
-    Post Post @relation(fields: [postId], references: [id])
+    Post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
     @@index([userId, postId])
 }
@@ -54,7 +54,7 @@ model DownVote {
     updatedAt DateTime? @updatedAt @map("updated_at")
     deletedAt DateTime? @map("deleted_at")
 
-    Post Post @relation(fields: [postId], references: [id])
+    Post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
     @@index([userId, postId])
 }
