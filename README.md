@@ -4,6 +4,8 @@ Simple Reddit clone.
 
 ## Live demo 👉 [Reddit-clone-nine-xi](https://reddit-clone-nine-xi.vercel.app/)
 
+
+### Dev live demo 👉 [Reddit-clone-dev](https://reddit-clone-git-dev-neodarksoulink.vercel.app/)
 ### Screenshots
 
 | Home  | Comments | Responsive | Dark mode |
