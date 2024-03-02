@@ -33,9 +33,17 @@ export const Post: React.FC<{
     | RecursivePostRes;
   asPostComment?: boolean;
   displayComment?: boolean;
+  clickable?: boolean;
   onPostAdded?: Parameters<typeof Comment>["0"]["onPostAdded"];
   onPostDeleted?: () => unknown;
-}> = ({ post, asPostComment, displayComment, onPostAdded, onPostDeleted }) => {
+}> = ({
+  post,
+  asPostComment,
+  displayComment,
+  onPostAdded,
+  onPostDeleted,
+  clickable,
+}) => {
   // DATA
   const { user: connectedUser } = useUser();
 
@@ -131,7 +139,7 @@ export const Post: React.FC<{
               <Button
                 variant="destructive"
                 size="sm"
-                className="dark:data-[open=true]:text-indigo-500 px-1 text-gray-700 hover:text-indigo-600 dark:hover:text-indigo-500 [open=true]:text-indigo-600"
+                className="[open=true]:text-indigo-600 px-1 text-gray-700 hover:text-indigo-600 dark:hover:text-indigo-500 dark:data-[open=true]:text-indigo-500"
                 data-open={isCommentOpen ? "true" : "false"}
                 onClick={toggleReply}
               >
@@ -143,7 +151,7 @@ export const Post: React.FC<{
 
         <div
           onClick={() => {
-            if (deletePost.isLoading) return;
+            if (!clickable || deletePost.isLoading) return;
             router.push(`/post/${post.id}`, { scroll: false });
           }}
           className="flex-1 cursor-pointer"

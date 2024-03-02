@@ -45,6 +45,7 @@ const Home = () => {
           post={item}
           key={item.id.toString()}
           onPostDeleted={() => getPostList.refetch()}
+          clickable
         />
       ))}
     </Page>
