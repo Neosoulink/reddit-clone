@@ -18,9 +18,9 @@ export const SidebarButton: React.FC<{
   return (
     <Button
       variant="ghost"
-      className={`justify-start hover:bg-gray-50 sm:py-3 sm:text-base ${pathName === url ? "!text-indigo-600" : ""}`}
+      className={`justify-start px-2 hover:bg-gray-50 sm:py-3 sm:text-base md:px-4 ${pathName === url ? "dark:text-white text-indigo-600 dark:bg-gray-50/5" : ""}`}
       onClick={async () => {
-        if (url) router.push(url);
+        if (url) router.push(url, { scroll: false });
       }}
     >
       <>

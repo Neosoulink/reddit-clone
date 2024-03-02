@@ -5,4 +5,5 @@
 html,
 body {
   @apply text-gray-700;
+  @apply dark:text-gray-50;
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useContext, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { UserContext } from "../provider/user-provider";
 import { type Post } from "@prisma/client";
 
 // HELPERS
@@ -24,7 +25,6 @@ import { Input } from "../ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Textarea } from "../ui/textarea";
 import { Icon } from "../Icon";
-import { useRouter } from "next/navigation";
 
 export const Comment: React.FC<{
   forPost?: Post;
@@ -47,7 +47,7 @@ export const Comment: React.FC<{
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!isSignedIn) return router.push("/sign-in");
+    if (!currentUser) return router.push("/sign-in");
     if (forEdition && forPost?.id) {
       editPost.mutate({
         ...values,
@@ -63,9 +63,13 @@ export const Comment: React.FC<{
     });
   };
 
+  const onClickForm = (e: React.MouseEvent<HTMLFormElement, MouseEvent>) => {
+    e.stopPropagation();
+  };
+
   // HOOKS
   const router = useRouter();
-  const { user, isSignedIn } = useUser();
+  const currentUser = useContext(UserContext);
   const createPost = api.post.create.useMutation({
     onSuccess,
   });
@@ -93,16 +97,17 @@ export const Comment: React.FC<{
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="mb-10">
+      <form onSubmit={form.handleSubmit(onSubmit)} onClick={onClickForm}>
         <Card className="p-4 shadow-lg">
           <CardContent className="mb-0 flex px-0 pb-3">
             <Avatar className="mr-2 mt-2">
               <AvatarImage
-                src={user?.imageUrl}
-                alt={user?.username ?? "Unknown"}
+                src={currentUser?.imageUrl}
+                alt={currentUser?.username ?? "Unknown"}
               />
-
-              <AvatarFallback>{(user?.username ?? "X")[0]}</AvatarFallback>
+              <AvatarFallback>
+                {(currentUser?.username ?? "X")[0]}
+              </AvatarFallback>
             </Avatar>
 
             <div className="flex flex-1 flex-col">
@@ -117,6 +122,7 @@ export const Comment: React.FC<{
                           <Input
                             placeholder="Title of your post"
                             className="text-base"
+                            autoFocus
                             {...{
                               ...field,
                               value:
@@ -137,9 +143,12 @@ export const Comment: React.FC<{
                 control={form.control}
                 name="text"
                 render={({ field }) => (
-                  <FormItem className="border-b border-b-gray-200 ">
+                  <FormItem className="border-b border-b-gray-200 dark:border-b-gray-700">
                     <FormControl>
                       <Textarea
+                        onLoad={(e) => {
+                          if (forPost?.postId) e.currentTarget.focus();
+                        }}
                         placeholder={
                           forPost
                             ? "Comment your thoughts"

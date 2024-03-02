@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import React, { useContext, useState } from "react";
 import { formatDistance } from "date-fns";
+import { Edit3Icon, Trash2Icon, XIcon } from "lucide-react";
 
 // HELPERS
 import { api } from "~/trpc/react";
@@ -11,6 +11,9 @@ import { type api as apiServer } from "~/trpc/server";
 
 // TYPES
 import { type RecursivePostRes } from "~/server/api/routers/post";
+
+// PROVIDERS
+import { UserContext } from "../provider/user-provider";
 
 // COMPONENTS
 import {
@@ -25,7 +28,6 @@ import { Button } from "../ui/button";
 import { Icon } from "../Icon";
 import { Comment } from "./Comment";
 import { useRouter } from "next/navigation";
-import { Edit3Icon, Trash2Icon, XIcon } from "lucide-react";
 
 export const Post: React.FC<{
   post:
@@ -33,14 +35,21 @@ export const Post: React.FC<{
     | RecursivePostRes;
   asPostComment?: boolean;
   displayComment?: boolean;
+  clickable?: boolean;
   onPostAdded?: Parameters<typeof Comment>["0"]["onPostAdded"];
   onPostDeleted?: () => unknown;
-}> = ({ post, asPostComment, displayComment, onPostAdded, onPostDeleted }) => {
+}> = ({
+  post,
+  asPostComment,
+  displayComment,
+  onPostAdded,
+  onPostDeleted,
+  clickable,
+}) => {
   // DATA
-  const { user: connectedUser } = useUser();
+  const currentUser = useContext(UserContext);
 
   // HOOKS
-  const { isSignedIn } = useUser();
   const router = useRouter();
   const voteMutation = api.post.vote.useMutation({
     onSuccess: async (data) => {
@@ -69,17 +78,22 @@ export const Post: React.FC<{
     e.preventDefault();
     e.stopPropagation();
 
-    if (!isSignedIn) return router.push("/sign-in");
+    if (!currentUser?.isSignedIn)
+      return router.push("/sign-in", { scroll: false });
 
     try {
       if (voteMutation.isLoading) return;
 
       voteMutation.mutate({ type, postId: post.id });
-    } catch (error) {}
+    } catch (_) {}
   };
 
-  const toggleReply = () => {
-    if (!isSignedIn) return router.push("/sign-in");
+  const toggleReply = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!currentUser?.isSignedIn)
+      return router.push("/sign-in", { scroll: false });
 
     setIsCommentOpen(!isCommentOpen);
   };
@@ -91,76 +105,100 @@ export const Post: React.FC<{
     setIsCommentOpen(!!displayComment);
   };
 
+  const onClickContent = () => {
+    if (!clickable || deletePost.isLoading) return;
+    router.push(`/post/${post.id}`, { scroll: false });
+  };
+
+  const onClickAvatar = (
+    e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
+  ) => {
+    if (deletePost.isLoading) return;
+    e.stopPropagation();
+  };
+
+  const onClickEdit = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    e.stopPropagation();
+    setIsCommentOpen(false);
+    setIsEditing(true);
+  };
+
+  const onClickCancel = (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+  ) => {
+    e.stopPropagation();
+    setIsEditing(false);
+  };
+
+  const onClickDelete = (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+  ) => {
+    e.stopPropagation();
+    setIsCommentOpen(false);
+    setIsEditing(false);
+    deletePost.mutate({ id: post.id });
+  };
+
   return (
     <div>
       <Card
         aria-disabled={deletePost.isLoading || isDeleted}
-        className={`flex border-x-0 border-t-0 transition-colors hover:bg-gray-50 aria-disabled:pointer-events-none aria-disabled:opacity-80 ${asPostComment ? "flex-col-reverse border-0" : ""}`}
+        className={`flex border-x-0 border-t-0 px-1 transition-colors hover:bg-gray-50 aria-disabled:pointer-events-none aria-disabled:opacity-80 ${asPostComment ? "flex-col-reverse border-0" : ""}`}
       >
         {!isEditing && (
-          <>
-            <div
-              className={`flex items-center ${asPostComment ? "flex-row space-x-2" : "flex-col justify-center"}`}
+          <div
+            className={`flex items-center ${asPostComment ? "flex-row space-x-2" : "flex-col justify-center"}`}
+          >
+            <Button
+              size="icon"
+              variant="ghost"
+              className={`h-8 w-8 cursor-pointer rounded-full ${currentUser?.isSignedIn && post?.upVotes?.length ? "text-indigo-500 dark:text-indigo-500" : ""}`}
+              type="button"
+              disabled={voteMutation.isLoading}
+              onClick={(e) => onVote(e, "UP")}
             >
+              <Icon type="UP_VOTE" />
+            </Button>
+
+            <span className="text-base">
+              {post._count.upVotes - post._count.downVotes}
+            </span>
+
+            <Button
+              size="icon"
+              variant="ghost"
+              className={`h-8 w-8 cursor-pointer rounded-full ${currentUser?.isSignedIn && post?.downVotes?.length ? "text-indigo-500 dark:text-indigo-500" : ""}`}
+              type="button"
+              disabled={voteMutation.isLoading}
+              onClick={(e) => onVote(e, "DOWN")}
+            >
+              <Icon type="DOWN_VOTE" />
+            </Button>
+
+            {!!asPostComment && (
               <Button
-                size="icon"
-                variant="ghost"
-                className={`h-8 w-8 cursor-pointer rounded-full ${post?.upVotes?.length ? "text-indigo-600" : ""}`}
-                type="button"
-                disabled={voteMutation.isLoading}
-                onClick={(e) => onVote(e, "UP")}
+                variant="destructive"
+                size="sm"
+                className="[open=true]:text-indigo-600 px-1 text-gray-700 hover:text-indigo-600 dark:hover:text-indigo-500 dark:data-[open=true]:text-indigo-500"
+                data-open={isCommentOpen ? "true" : "false"}
+                onClick={toggleReply}
               >
-                <Icon type="UP_VOTE" />
+                <Icon type="REPLY" className="mr-2" /> Reply
               </Button>
-
-              <span className="text-base">
-                {post._count.upVotes - post._count.downVotes}
-              </span>
-
-              <Button
-                size="icon"
-                variant="ghost"
-                className={`h-8 w-8 cursor-pointer rounded-full ${post?.downVotes?.length ? "text-indigo-600" : ""}`}
-                type="button"
-                disabled={voteMutation.isLoading}
-                onClick={(e) => onVote(e, "DOWN")}
-              >
-                <Icon type="DOWN_VOTE" />
-              </Button>
-
-              {!!asPostComment && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="px-1 text-gray-700 hover:text-indigo-600 data-[open=true]:text-indigo-600"
-                  data-open={isCommentOpen ? "true" : "false"}
-                  onClick={toggleReply}
-                >
-                  <Icon type="REPLY" className="mr-2" /> Reply
-                </Button>
-              )}
-            </div>
-          </>
+            )}
+          </div>
         )}
 
-        <div
-          onClick={() => {
-            if (deletePost.isLoading) return;
-            router.push(`/post/${post.id}`);
-          }}
-          className="flex-1 cursor-pointer"
-        >
-          <CardHeader className="mb-2 flex-1 space-y-0 py-0 pl-4 pt-6">
+        <div onClick={onClickContent} className="flex-1 cursor-pointer">
+          <CardHeader className="mb-2 flex-1 space-y-0 px-4 py-0 pt-6">
             <CardDescription className="mb-2 flex w-full items-center justify-between text-gray-600">
-              <div className="flex">
+              <span className="flex">
                 {!isEditing && (
                   <Link
                     href={post.author?.id ? `/user/${post.author.id}` : ""}
                     className="mr-2 rounded-full"
-                    onClick={(e) => {
-                      if (deletePost.isLoading) return;
-                      e.stopPropagation();
-                    }}
+                    onClick={onClickAvatar}
+                    scroll={false}
                   >
                     <Avatar>
                       <AvatarImage
@@ -174,7 +212,7 @@ export const Post: React.FC<{
                   </Link>
                 )}
                 {!asPostComment && "Posted by"}{" "}
-                {post.authorId === connectedUser?.id
+                {post.authorId === currentUser?.id
                   ? "You"
                   : post.author?.username ?? "Unknown"}{" "}
                 {formatDistance(post.createdAt, new Date(), {
@@ -184,20 +222,17 @@ export const Post: React.FC<{
                 post.updatedAt.toString() !== post.createdAt.toString()
                   ? "(edited)"
                   : ""}
-              </div>
+              </span>
 
-              {connectedUser?.id === post.authorId && (
-                <div className="flex items-center space-x-2 ">
+              {currentUser?.id === post.authorId && (
+                <span className="flex items-center space-x-2 ">
                   {isEditing && (
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6 cursor-pointer rounded-full"
                       disabled={deletePost.isLoading}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsEditing(false);
-                      }}
+                      onClick={onClickCancel}
                     >
                       <XIcon size={16} />
                     </Button>
@@ -210,11 +245,7 @@ export const Post: React.FC<{
                         size="icon"
                         className="h-6 w-6 cursor-pointer rounded-full"
                         disabled={deletePost.isLoading}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsCommentOpen(false);
-                          setIsEditing(true);
-                        }}
+                        onClick={onClickEdit}
                       >
                         <Edit3Icon size={16} />
                       </Button>
@@ -222,14 +253,9 @@ export const Post: React.FC<{
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 cursor-pointer rounded-full hover:bg-red-600/15"
+                        className="h-6 w-6 cursor-pointer rounded-full hover:bg-red-600/15 dark:hover:bg-red-600/15"
                         disabled={deletePost.isLoading}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsCommentOpen(false);
-                          setIsEditing(false);
-                          deletePost.mutate({ id: post.id });
-                        }}
+                        onClick={onClickDelete}
                       >
                         {deletePost.isLoading ? (
                           <Icon
@@ -242,7 +268,7 @@ export const Post: React.FC<{
                       </Button>
                     </>
                   )}
-                </div>
+                </span>
               )}
             </CardDescription>
 
@@ -250,9 +276,7 @@ export const Post: React.FC<{
           </CardHeader>
 
           {!isEditing && (
-            <CardContent
-              className={`pl-4 text-gray-700 ${asPostComment ? "pb-3" : "pb-10"}`}
-            >
+            <CardContent className={`pl-4 ${asPostComment ? "pb-3" : "pb-10"}`}>
               {post.text}
             </CardContent>
           )}
