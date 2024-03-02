@@ -1,15 +1,18 @@
 "use client";
 
 import React, { useContext, useEffect } from "react";
+import NextError from "next/error";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { UserContext } from "../provider/user-provider";
 import { type Post } from "@prisma/client";
 
 // HELPERS
 import { api } from "~/trpc/react";
+
+// PROVIDERS
+import { UserContext } from "../provider/user-provider";
 
 // COMPONENTS
 import { Card, CardContent, CardFooter } from "../ui/card";
@@ -94,6 +97,24 @@ export const Comment: React.FC<{
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forEdition]);
+
+  useEffect(() => {
+    if (createPost.error) {
+      throw new NextError({
+        title: createPost.error.message ?? "Something went wrong!",
+        statusCode: createPost.error.data?.httpStatus ?? 500,
+      });
+    }
+  }, [createPost.error, createPost.error?.data]);
+
+  useEffect(() => {
+    if (editPost.error) {
+      throw new NextError({
+        title: editPost.error.message ?? "Something went wrong!",
+        statusCode: editPost.error.data?.httpStatus ?? 500,
+      });
+    }
+  }, [editPost.error, editPost.error?.data]);
 
   return (
     <Form {...form}>

@@ -36,6 +36,9 @@ This app needs some `.env` config props, make you sure to provide:
 - `DIRECT_URL`: Used for migrations. You can remove it if you plan to use another provider. (make sure to remove it in `prisma.schema`).
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY`
+- `UPSTASH_REDIS_REST_URL` _(new)_: Used for rate limiter, available on your [console.upstash.com/redis/](https://console.upstash.com/redis/)
+- `UPSTASH_REDIS_REST_TOKEN` _(new)_
+
 
 After the above is done, you can proceed with the installation and the application launch:
 
