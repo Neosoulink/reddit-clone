@@ -2,8 +2,6 @@
 
 import React, { useContext, type PropsWithChildren } from "react";
 import { UserButton } from "@clerk/nextjs";
-import { useTheme } from "next-themes";
-import { MoonIcon, SunIcon, SunMoon } from "lucide-react";
 
 // PROVIDERS
 import { UserContext } from "../provider/user-provider";
@@ -12,6 +10,7 @@ import { UserContext } from "../provider/user-provider";
 import { Button } from "../ui/button";
 import { SidebarButton } from "../common/SidebarButton";
 import { SkeletonLoader } from "../common/SkeletonLoader";
+import ThemeSwitchButton from "../common/ThemeSwitchButton";
 
 export const Page: React.FC<PropsWithChildren<{ isLoading?: boolean }>> = ({
   children,
@@ -19,7 +18,6 @@ export const Page: React.FC<PropsWithChildren<{ isLoading?: boolean }>> = ({
 }) => {
   // HOOKS
   const currentUser = useContext(UserContext);
-  const { theme, setTheme } = useTheme();
 
   return (
     <>
@@ -39,27 +37,7 @@ export const Page: React.FC<PropsWithChildren<{ isLoading?: boolean }>> = ({
         </div>
 
         <div className="flex md:flex-col md:space-y-2">
-          <Button
-            variant="ghost"
-            className="justify-start rounded-full hover:bg-gray-50 hover:text-gray-700 md:rounded-md"
-            onClick={() => {
-              setTheme(
-                theme === "dark"
-                  ? "light"
-                  : theme === "light"
-                    ? "system"
-                    : "dark",
-              );
-            }}
-          >
-            {theme === "dark" && <MoonIcon className="md:ml-1" />}
-            {theme === "light" && <SunIcon className="md:ml-1" />}
-            {theme === "system" && <SunMoon className="md:ml-1" />}
-
-            <span className="ml-5 hidden capitalize sm:inline-block">
-              {theme}
-            </span>
-          </Button>
+          <ThemeSwitchButton />
 
           {!!currentUser && (
             <Button
