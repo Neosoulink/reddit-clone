@@ -1,9 +1,12 @@
 "use client";
 
-import React, { type PropsWithChildren } from "react";
-import { UserButton, useUser } from "@clerk/nextjs";
+import React, { useContext, type PropsWithChildren } from "react";
+import { UserButton } from "@clerk/nextjs";
 import { useTheme } from "next-themes";
 import { MoonIcon, SunIcon, SunMoon } from "lucide-react";
+
+// PROVIDERS
+import { UserContext } from "../provider/user-provider";
 
 // COMPONENTS
 import { Button } from "../ui/button";
@@ -15,7 +18,7 @@ export const Page: React.FC<PropsWithChildren<{ isLoading?: boolean }>> = ({
   isLoading,
 }) => {
   // HOOKS
-  const { user } = useUser();
+  const currentUser = useContext(UserContext);
   const { theme, setTheme } = useTheme();
 
   return (
@@ -24,11 +27,11 @@ export const Page: React.FC<PropsWithChildren<{ isLoading?: boolean }>> = ({
         <div className="flex space-x-1 md:flex-1 md:flex-col md:space-x-0 md:space-y-1">
           <SidebarButton label="Home" iconType="HOME" url="/" />
 
-          {user ? (
+          {currentUser ? (
             <SidebarButton
               label="My Posts"
               iconType="COMMENT"
-              url={`/user/${user.id}`}
+              url={`/user/${currentUser.id}`}
             />
           ) : (
             <SidebarButton label="Log In" iconType="LOGIN" url="/sign-in" />
@@ -58,7 +61,7 @@ export const Page: React.FC<PropsWithChildren<{ isLoading?: boolean }>> = ({
             </span>
           </Button>
 
-          {!!user && (
+          {!!currentUser && (
             <Button
               variant="ghost"
               className="hover:bg-transparent dark:hover:bg-transparent justify-start  hover:text-gray-700 dark:hover:text-gray-50"
@@ -66,7 +69,7 @@ export const Page: React.FC<PropsWithChildren<{ isLoading?: boolean }>> = ({
               <>
                 <UserButton afterSignOutUrl="/" />
                 <span className="ml-4 hidden sm:inline-block">
-                  {user.firstName} {user.lastName}
+                  {currentUser.firstName} {currentUser.lastName}
                 </span>
               </>
             </Button>

@@ -3,15 +3,17 @@
 import { type NextPage } from "next";
 import NextError from "next/error";
 import { unstable_noStore as noStore } from "next/cache";
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
 
 // HELPERS
 import { api } from "~/trpc/react";
 
 // TYPES
 import { type RecursivePostRes } from "~/server/api/routers/post";
+
+// PROVIDER
+import { UserContext } from "~/components/provider/user-provider";
 
 // COMPONENTS
 import { Page } from "~/components/layout/Page";
@@ -38,7 +40,7 @@ const PostPage: NextPage = () => {
   });
 
   // HOOKS
-  const { user } = useUser();
+  const currentUser = useContext(UserContext);
 
   // LOCAL COMPONENTS
   const DisplayComments = (_: { data?: RecursivePostRes[] }) => {
@@ -83,6 +85,10 @@ const PostPage: NextPage = () => {
     );
   };
 
+  // METHODS
+  const onPostAdded = async () => await getRecursivePosts.refetch();
+  const onPostDeleted = () => getRecursivePosts.refetch();
+
   useEffect(() => {
     if (getRecursivePosts.error) {
       throw new NextError({
@@ -101,9 +107,9 @@ const PostPage: NextPage = () => {
         <>
           <Post
             post={getRecursivePosts.data}
-            displayComment={!!user?.id}
-            onPostAdded={async () => await getRecursivePosts.refetch()}
-            onPostDeleted={() => getRecursivePosts.refetch()}
+            displayComment={!!currentUser?.id}
+            onPostAdded={onPostAdded}
+            onPostDeleted={onPostDeleted}
           />
 
           <section className="pt-10">

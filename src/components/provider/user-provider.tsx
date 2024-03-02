@@ -1,20 +1,22 @@
 "use client";
 
+import { createContext } from "react";
 import { useUser } from "@clerk/nextjs";
 import { type User } from "@clerk/nextjs/server";
-import { createContext } from "react";
 
-export const ContextContext = createContext<
-  | Pick<User, "id" | "imageUrl" | "username" | "firstName" | "lastName">
+export const UserContext = createContext<
+  | (Pick<User, "id" | "imageUrl" | "username" | "firstName" | "lastName"> & {
+      isSignedIn?: boolean;
+    })
   | undefined
   | null
 >(null);
 
 const UserProvider = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useUser();
+  const { user, isSignedIn } = useUser();
 
   return (
-    <ContextContext.Provider
+    <UserContext.Provider
       value={
         user
           ? {
@@ -23,12 +25,13 @@ const UserProvider = ({ children }: { children: React.ReactNode }) => {
               username: user.username,
               firstName: user.firstName,
               lastName: user.lastName,
+              isSignedIn,
             }
           : user
       }
     >
       {children}
-    </ContextContext.Provider>
+    </UserContext.Provider>
   );
 };
 

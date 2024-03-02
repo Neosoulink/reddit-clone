@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import React, { useContext, useState } from "react";
 import { formatDistance } from "date-fns";
+import { Edit3Icon, Trash2Icon, XIcon } from "lucide-react";
 
 // HELPERS
 import { api } from "~/trpc/react";
@@ -11,6 +11,9 @@ import { type api as apiServer } from "~/trpc/server";
 
 // TYPES
 import { type RecursivePostRes } from "~/server/api/routers/post";
+
+// PROVIDERS
+import { UserContext } from "../provider/user-provider";
 
 // COMPONENTS
 import {
@@ -25,7 +28,6 @@ import { Button } from "../ui/button";
 import { Icon } from "../Icon";
 import { Comment } from "./Comment";
 import { useRouter } from "next/navigation";
-import { Edit3Icon, Trash2Icon, XIcon } from "lucide-react";
 
 export const Post: React.FC<{
   post:
@@ -45,10 +47,9 @@ export const Post: React.FC<{
   clickable,
 }) => {
   // DATA
-  const { user: connectedUser } = useUser();
+  const currentUser = useContext(UserContext);
 
   // HOOKS
-  const { isSignedIn } = useUser();
   const router = useRouter();
   const voteMutation = api.post.vote.useMutation({
     onSuccess: async (data) => {
@@ -77,7 +78,8 @@ export const Post: React.FC<{
     e.preventDefault();
     e.stopPropagation();
 
-    if (!isSignedIn) return router.push("/sign-in", { scroll: false });
+    if (!currentUser?.isSignedIn)
+      return router.push("/sign-in", { scroll: false });
 
     try {
       if (voteMutation.isLoading) return;
@@ -90,7 +92,8 @@ export const Post: React.FC<{
     e.preventDefault();
     e.stopPropagation();
 
-    if (!isSignedIn) return router.push("/sign-in", { scroll: false });
+    if (!currentUser?.isSignedIn)
+      return router.push("/sign-in", { scroll: false });
 
     setIsCommentOpen(!isCommentOpen);
   };
@@ -149,7 +152,7 @@ export const Post: React.FC<{
             <Button
               size="icon"
               variant="ghost"
-              className={`h-8 w-8 cursor-pointer rounded-full ${post?.upVotes?.length ? "text-indigo-500 dark:text-indigo-500" : ""}`}
+              className={`h-8 w-8 cursor-pointer rounded-full ${currentUser?.isSignedIn && post?.upVotes?.length ? "text-indigo-500 dark:text-indigo-500" : ""}`}
               type="button"
               disabled={voteMutation.isLoading}
               onClick={(e) => onVote(e, "UP")}
@@ -164,7 +167,7 @@ export const Post: React.FC<{
             <Button
               size="icon"
               variant="ghost"
-              className={`h-8 w-8 cursor-pointer rounded-full ${post?.downVotes?.length ? "text-indigo-500 dark:text-indigo-500" : ""}`}
+              className={`h-8 w-8 cursor-pointer rounded-full ${currentUser?.isSignedIn && post?.downVotes?.length ? "text-indigo-500 dark:text-indigo-500" : ""}`}
               type="button"
               disabled={voteMutation.isLoading}
               onClick={(e) => onVote(e, "DOWN")}
@@ -209,7 +212,7 @@ export const Post: React.FC<{
                   </Link>
                 )}
                 {!asPostComment && "Posted by"}{" "}
-                {post.authorId === connectedUser?.id
+                {post.authorId === currentUser?.id
                   ? "You"
                   : post.author?.username ?? "Unknown"}{" "}
                 {formatDistance(post.createdAt, new Date(), {
@@ -221,7 +224,7 @@ export const Post: React.FC<{
                   : ""}
               </span>
 
-              {connectedUser?.id === post.authorId && (
+              {currentUser?.id === post.authorId && (
                 <span className="flex items-center space-x-2 ">
                   {isEditing && (
                     <Button

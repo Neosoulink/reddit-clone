@@ -3,11 +3,13 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { useParams } from "next/navigation";
 import NextError from "next/error";
-import { useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useContext, useEffect } from "react";
 
 // HELPERS
 import { api } from "~/trpc/react";
+
+// PROVIDERS
+import { UserContext } from "~/components/provider/user-provider";
 
 // COMPONENTS
 import { Page } from "~/components/layout/Page";
@@ -19,12 +21,15 @@ const Home = () => {
 
   // DATA
   const params = useParams<{ user: string }>();
-  const { user } = useUser();
+  const currentUser = useContext(UserContext);
 
   if (typeof params.user !== "string")
     throw new NextError({ title: "Not found", statusCode: 404 });
 
   const getPostList = api.post.getAll.useQuery({ byAuthorId: params.user });
+
+  // METHODS
+  const onPostDeleted = () => getPostList.refetch();
 
   useEffect(() => {
     if (getPostList.error) {
@@ -42,7 +47,7 @@ const Home = () => {
         label={
           getPostList.data?.length &&
           getPostList.data[0]?.author?.username &&
-          user?.id !== getPostList.data[0].authorId
+          currentUser?.id !== getPostList.data[0].authorId
             ? `${getPostList.data[0]?.author?.username}'s posts`
             : undefined
         }
@@ -52,7 +57,7 @@ const Home = () => {
         <Post
           post={item}
           key={item.id.toString()}
-          onPostDeleted={() => getPostList.refetch()}
+          onPostDeleted={onPostDeleted}
         />
       ))}
     </Page>

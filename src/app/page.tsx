@@ -2,11 +2,13 @@
 
 import { unstable_noStore as noStore } from "next/cache";
 import NextError from "next/error";
-import { useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useContext, useEffect } from "react";
 
 // HELPERS
 import { api } from "~/trpc/react";
+
+// PROVIDERS
+import { UserContext } from "~/components/provider/user-provider";
 
 // COMPONENTS
 import { Page } from "~/components/layout/Page";
@@ -20,7 +22,10 @@ const Home = () => {
   const getPostList = api.post.getAll.useQuery(null);
 
   // HOOKS
-  const { user } = useUser();
+  const currentUser = useContext(UserContext);
+
+  // METHODS
+  const onPostDeleted = () => getPostList.refetch();
 
   useEffect(() => {
     if (getPostList.error) {
@@ -34,7 +39,7 @@ const Home = () => {
 
   return (
     <Page isLoading={getPostList.isLoading}>
-      {user?.id && (
+      {currentUser?.id && (
         <div className="mb-10">
           <Comment onPostAdded={async () => await getPostList.refetch()} />
         </div>
@@ -44,7 +49,7 @@ const Home = () => {
         <Post
           post={item}
           key={item.id.toString()}
-          onPostDeleted={() => getPostList.refetch()}
+          onPostDeleted={onPostDeleted}
           clickable
         />
       ))}
