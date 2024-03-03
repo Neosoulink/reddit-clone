@@ -172,7 +172,7 @@ export const Post: React.FC<{
   const PostCard: React.FC = () => (
     <Card
       aria-disabled={deletePost.isLoading}
-      className={`flex border-x-0 border-t-0 px-1 transition-colors hover:bg-gray-50 aria-disabled:pointer-events-none aria-disabled:opacity-80 ${asPostComment ? "flex-col-reverse border-0" : ""} flex-1 text-left`}
+      className={`flex border-x-0 border-t-0 px-1 transition-colors hover:bg-gray-50 dark:hover:bg-gray-50/10 aria-disabled:pointer-events-none aria-disabled:opacity-80 ${asPostComment ? "flex-col-reverse border-0" : ""} flex-1 text-left`}
     >
       {!isEditing && (
         <div
@@ -221,11 +221,11 @@ export const Post: React.FC<{
       <div onClick={onClickContent} className="flex-1 cursor-pointer">
         <CardHeader className="mb-2 flex-1 space-y-0 px-4 py-0 pt-6">
           <CardDescription className="mb-2 flex w-full items-center justify-between text-gray-600">
-            <span className="flex items-center">
-              <span
-                className="group flex items-center justify-center mr-1"
-                onClick={onClickAvatar}
-              >
+            <span
+              className="flex flex-wrap items-center justify-start"
+              onClick={onClickAvatar}
+            >
+              <span className="group mr-1 flex flex-wrap  items-center">
                 {!isEditing && (
                   <Avatar className="mr-2 rounded-full transition-transform duration-200 group-hover:scale-110">
                     <AvatarImage
@@ -237,21 +237,24 @@ export const Post: React.FC<{
                     </AvatarFallback>
                   </Avatar>
                 )}
-
                 <span className="group-hover:text-indigo-500">
                   {!asPostComment && "Posted by"}{" "}
                   {post.authorId === currentUser?.id
                     ? "You"
-                    : post.author?.username ?? "Unknown"}{" "}
+                    : post.author?.username ?? "Unknown"}
                 </span>
               </span>
-              {formatDistance(post.createdAt, new Date(), {
-                addSuffix: true,
-              }).replace(/about/gi, "")}{" "}
-              {post.updatedAt &&
-              post.updatedAt.toString() !== post.createdAt.toString()
-                ? "(edited)"
-                : ""}
+              <span className="mr-1">
+                {formatDistance(post.createdAt, new Date(), {
+                  addSuffix: true,
+                }).replace(/about/gi, "")}
+              </span>
+              <span className="mr-1">
+                {post.updatedAt &&
+                post.updatedAt.toString() !== post.createdAt.toString()
+                  ? "(edited)"
+                  : ""}
+              </span>
             </span>
 
             {currentUser?.id === post.authorId && (
@@ -303,7 +306,9 @@ export const Post: React.FC<{
         </CardHeader>
 
         {!isEditing && (
-          <CardContent className={`pl-4 ${asPostComment ? "pb-3" : "pb-10"}`}>
+          <CardContent
+            className={`pl-4 text-base ${asPostComment ? "pb-3" : "pb-10"}`}
+          >
             <span
               dangerouslySetInnerHTML={{
                 __html: post.text.replace(/\n/g, "<br>"),
