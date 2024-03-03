@@ -21,6 +21,7 @@ model Post {
     post Post? @relation("PostComment", fields: [postId], references: [id], onDelete: Cascade)
 
     comments  Post[]     @relation("PostComment")
+    votes     Vote[]
     upVotes   UpVote[]
     downVotes DownVote[]
 
@@ -49,6 +50,27 @@ model DownVote {
     id     Int    @id @default(autoincrement())
     userId String @map("user_id")
     postId Int    @map("post_id")
+
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime? @updatedAt @map("updated_at")
+    deletedAt DateTime? @map("deleted_at")
+
+    Post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+    @@index([userId, postId])
+}
+
+enum VoteType {
+    UP
+    DOWN
+}
+
+/// The votee table will replace the down & up vote tables in the new Majore maj
+model Vote {
+    id       Int      @id @default(autoincrement())
+    userId   String   @unique() @map("user_id")
+    postId   Int      @map("post_id")
+    voteType VoteType
 
     createdAt DateTime  @default(now()) @map("created_at")
     updatedAt DateTime? @updatedAt @map("updated_at")

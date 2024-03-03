@@ -59,7 +59,7 @@ export const Post: React.FC<{
   const router = useRouter();
   const [isCommentOpen, setIsCommentOpen] = useState(!!displayComment);
   const [isEditing, setIsEditing] = useState(false);
-  const voteMutation = api.post.vote.useMutation({
+  const voteMutation = api.vote.set.useMutation({
     onSuccess: async (data) => {
       if (!data) return;
 
