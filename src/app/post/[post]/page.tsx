@@ -2,7 +2,6 @@
 
 import { type NextPage } from "next";
 import NextError from "next/error";
-import { unstable_noStore as noStore } from "next/cache";
 import { useContext, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -22,8 +21,6 @@ import { Post } from "~/components/common/Post";
 import CommentTree from "~/components/common/CommentTree";
 
 const PostPage: NextPage = () => {
-  noStore();
-
   const params = useParams<{ post: string }>();
 
   if (typeof params.post !== "string" || !/^[0-9]+$/gi.test(params.post))
@@ -39,10 +36,10 @@ const PostPage: NextPage = () => {
     { enabled: false, trpc: { abortOnUnmount: true } },
   );
   const [postList, setPostList] = useState<RecursivePostRes | undefined>(
-    undefined,
+    getRecursivePosts.data?.post,
   );
   const [postCommentList, setPostCommentList] = useState<RecursivePostRes[]>(
-    [],
+    getRecursivePosts.data?.post?.comments ?? [],
   );
 
   // METHODS
@@ -109,7 +106,7 @@ const PostPage: NextPage = () => {
   }, [getRecursivePosts.error, getRecursivePosts.error?.data]);
 
   return (
-    <Page isLoading={getRecursivePosts.isLoading}>
+    <Page isLoading={getRecursivePosts.isLoading || !postList}>
       <PageHeader />
 
       {postList && getRecursivePosts.data && (

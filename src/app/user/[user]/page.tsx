@@ -1,6 +1,5 @@
 "use client";
 
-import { unstable_noStore as noStore } from "next/cache";
 import { useParams } from "next/navigation";
 import NextError from "next/error";
 import { useContext, useEffect, useState } from "react";
@@ -17,8 +16,6 @@ import { PageHeader } from "~/components/common/PageHeader";
 import { Post } from "~/components/common/Post";
 
 const Home = () => {
-  noStore();
-
   // HOOKS
   const params = useParams<{ user: string }>();
   const currentUser = useContext(UserContext);
@@ -59,7 +56,7 @@ const Home = () => {
   }, []);
 
   return (
-    <Page isLoading={!getPostList.data}>
+    <Page isLoading={!getPostList.data || !postList}>
       <PageHeader
         label={
           getPostList.data?.length &&

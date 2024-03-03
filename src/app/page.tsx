@@ -26,7 +26,7 @@ const Home = () => {
   });
   const [postList, setPostList] = useState<
     Exclude<(typeof getPostList)["data"], undefined>
-  >([]);
+  >(getPostList.data ?? []);
 
   // METHODS
   const onPostAdded: Parameters<typeof Post>[0]["onPostAdded"] = (post) => {
@@ -74,7 +74,7 @@ const Home = () => {
   }, [getPostList.error, getPostList.error?.data]);
 
   return (
-    <Page isLoading={getPostList.isLoading}>
+    <Page isLoading={getPostList.isLoading || !postList}>
       {currentUser?.id && (
         <div className="mb-10">
           <Comment onPostAdded={onPostAdded} />
