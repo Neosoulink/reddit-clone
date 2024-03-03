@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import NextError from "next/error";
 import { useRouter } from "next/navigation";
 import React, { useContext, useEffect, useState } from "react";
@@ -132,6 +131,10 @@ export const Post: React.FC<{
   ) => {
     if (deletePost.isLoading) return;
     e.stopPropagation();
+
+    router.push(post.author?.id ? `/user/${post.author.id}` : "", {
+      scroll: false,
+    });
   };
 
   const onClickEdit = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -218,29 +221,30 @@ export const Post: React.FC<{
       <div onClick={onClickContent} className="flex-1 cursor-pointer">
         <CardHeader className="mb-2 flex-1 space-y-0 px-4 py-0 pt-6">
           <CardDescription className="mb-2 flex w-full items-center justify-between text-gray-600">
-            <span className="flex">
-              {!isEditing && (
-                <Link
-                  href={post.author?.id ? `/user/${post.author.id}` : ""}
-                  className="mr-2 rounded-full"
-                  onClick={onClickAvatar}
-                  scroll={false}
-                >
-                  <Avatar>
+            <span className="flex items-center">
+              <span
+                className="group flex items-center justify-center mr-1"
+                onClick={onClickAvatar}
+              >
+                {!isEditing && (
+                  <Avatar className="mr-2 rounded-full transition-transform duration-200 group-hover:scale-110">
                     <AvatarImage
                       src={post.author?.imageUrl}
                       alt={post.author?.username ?? "Unknown"}
                     />
-                    <AvatarFallback>
+                    <AvatarFallback delayMs={600}>
                       {(post.author?.username ?? "X")[0]}
                     </AvatarFallback>
                   </Avatar>
-                </Link>
-              )}
-              {!asPostComment && "Posted by"}{" "}
-              {post.authorId === currentUser?.id
-                ? "You"
-                : post.author?.username ?? "Unknown"}{" "}
+                )}
+
+                <span className="group-hover:text-indigo-500">
+                  {!asPostComment && "Posted by"}{" "}
+                  {post.authorId === currentUser?.id
+                    ? "You"
+                    : post.author?.username ?? "Unknown"}{" "}
+                </span>
+              </span>
               {formatDistance(post.createdAt, new Date(), {
                 addSuffix: true,
               }).replace(/about/gi, "")}{" "}
