@@ -2,7 +2,7 @@
 
 import { unstable_noStore as noStore } from "next/cache";
 import NextError from "next/error";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 
 // HELPERS
 import { api } from "~/trpc/react";
@@ -18,14 +18,50 @@ import { Comment } from "~/components/common/Comment";
 const Home = () => {
   noStore();
 
-  // DATA
-  const getPostList = api.post.getAll.useQuery(null);
-
   // HOOKS
   const currentUser = useContext(UserContext);
+  const getPostList = api.post.getAll.useQuery(null, {
+    enabled: false,
+    trpc: { abortOnUnmount: true },
+  });
+  const [postList, setPostList] = useState<
+    Exclude<(typeof getPostList)["data"], undefined>
+  >(getPostList.data ?? []);
 
   // METHODS
-  const onPostDeleted = () => getPostList.refetch();
+  const onPostAdded: Parameters<typeof Post>[0]["onPostAdded"] = (post) => {
+    if (!currentUser) return;
+    setPostList([
+      {
+        ...post,
+        upVotes: [],
+        downVotes: [],
+        _count: {
+          upVotes: 0,
+          downVotes: 0,
+        },
+        author: {
+          id: currentUser.id,
+          imageUrl: currentUser.imageUrl,
+          username: currentUser.username,
+        },
+      },
+      ...postList,
+    ]);
+  };
+  const onPostDeleted: Parameters<typeof Post>[0]["onPostDeleted"] = (post) => {
+    setPostList(postList.filter((p) => post.id !== p.id));
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      await getPostList.refetch().then((res) => {
+        setPostList(res.data ?? []);
+      });
+    };
+    void init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (getPostList.error) {
@@ -38,14 +74,14 @@ const Home = () => {
   }, [getPostList.error, getPostList.error?.data]);
 
   return (
-    <Page isLoading={getPostList.isLoading}>
+    <Page isLoading={getPostList.isLoading || !postList}>
       {currentUser?.id && (
         <div className="mb-10">
-          <Comment onPostAdded={async () => await getPostList.refetch()} />
+          <Comment onPostAdded={onPostAdded} />
         </div>
       )}
 
-      {getPostList.data?.map((item) => (
+      {postList?.map((item) => (
         <Post
           post={item}
           key={item.id.toString()}

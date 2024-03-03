@@ -33,7 +33,8 @@ export const Comment: React.FC<{
   forPost?: Post;
   forEdition?: boolean;
   onPostAdded?: (post: Post) => void;
-}> = ({ forPost, forEdition, onPostAdded }) => {
+  onPostEdited?: (post: Post) => void;
+}> = ({ forPost, forEdition, onPostAdded, onPostEdited }) => {
   // DATA
   const formSchema = z.object({
     ...(typeof forPost?.id === "number"
@@ -44,9 +45,14 @@ export const Comment: React.FC<{
 
   // METHODS
   const onSuccess = (res: Post) => {
-    if (!res || !onPostAdded) return;
-    onPostAdded(res);
+    if (!res) return;
     form.reset();
+
+    if (forEdition && forPost?.id) {
+      onPostEdited?.(res);
+      return;
+    }
+    onPostAdded?.(res);
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -190,9 +196,9 @@ export const Comment: React.FC<{
             <Button
               type="submit"
               className="rounded-xl"
-              disabled={createPost.isLoading}
+              disabled={createPost.isLoading || editPost.isLoading}
             >
-              {createPost.isLoading && (
+              {(createPost.isLoading || editPost.isLoading) && (
                 <Icon type="SPINNER" className="mr-1 h-4 w-4" />
               )}
               {forEdition ? "Update" : forPost ? "Comment" : "Post"}
