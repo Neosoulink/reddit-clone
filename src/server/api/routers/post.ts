@@ -1,9 +1,4 @@
-import {
-  type User,
-  clerkClient,
-  type SignedInAuthObject,
-  type SignedOutAuthObject,
-} from "@clerk/nextjs/server";
+import { type User, clerkClient } from "@clerk/nextjs/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { Ratelimit } from "@upstash/ratelimit";
@@ -14,57 +9,17 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
-import { type DownVote, type UpVote, type Post } from "@prisma/client";
 
 // TYPES
-export interface RecursivePost extends ReturnType<typeof getVotes> {
-  comments?: {
-    orderBy: { createdAt: "desc" | "asc" };
-    include: RecursivePost | ReturnType<typeof getVotes>;
-  };
-}
+import { type Post } from "@prisma/client";
 
-export interface RecursivePostRes extends Post {
-  _count: { upVotes: number; downVotes: number };
-  upVotes: UpVote[];
-  downVotes: DownVote[];
-  comments?: RecursivePostRes[];
-  author?: {
-    id: string;
-    username: string;
-    imageUrl: string;
-  };
-}
-
-// HELPERS
-const getVotes = (auth?: SignedInAuthObject | SignedOutAuthObject) => {
-  return {
-    ...(auth?.userId
-      ? {
-          upVotes: { where: { userId: auth.userId } },
-          downVotes: { where: { userId: auth.userId } },
-        }
-      : {}),
-    _count: { select: { upVotes: true, downVotes: true } },
-  };
-};
-
-const generateNestedComments = (
-  depth: number,
-  auth?: SignedInAuthObject | SignedOutAuthObject,
-): RecursivePost => {
-  if (depth === 0) return getVotes(auth);
-
-  const include = generateNestedComments(depth - 1, auth);
-
-  return {
-    ...getVotes(auth),
-    comments: {
-      orderBy: { createdAt: "desc" },
-      include,
-    },
-  };
-};
+// UTILS
+import {
+  generateNestedComments,
+  getVotes,
+  textSanitizer,
+  type RecursivePostRes,
+} from "~/lib/server-utils";
 
 /**
  * @originalAuthor t3dotgg | https://github.com/t3dotgg
@@ -159,6 +114,8 @@ export const postRouter = createTRPCRouter({
       return await ctx.db.post.create({
         data: {
           ...input,
+          ...(input.title ? { title: textSanitizer(input.title) } : {}),
+          text: textSanitizer(input.text),
           authorId: ctx.auth.userId,
         },
       });
@@ -299,8 +256,8 @@ export const postRouter = createTRPCRouter({
       return ctx.db.post.update({
         where: { id: input.id, authorId: ctx.auth.userId },
         data: {
-          ...(input.title ? { title: input.title } : undefined),
-          ...(input.text ? { text: input.text } : undefined),
+          ...(input.title ? { title: textSanitizer(input.title) } : undefined),
+          ...(input.text ? { text: textSanitizer(input.text) } : undefined),
         },
       });
     }),
