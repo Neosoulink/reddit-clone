@@ -6,12 +6,15 @@ import React, { useContext, useEffect, useState } from "react";
 import { formatDistance } from "date-fns";
 import { Edit3Icon, Trash2Icon, XIcon } from "lucide-react";
 
-// HELPERS
-import { api } from "~/trpc/react";
+// TYPES
+import { type Post as ServerPost } from "@prisma/client";
 import { type api as apiServer } from "~/trpc/server";
 
+// HELPERS
+import { api } from "~/trpc/react";
+
 // TYPES
-import { type RecursivePostRes } from "~/server/api/routers/post";
+import { type RecursivePostRes } from "~/lib/server-utils";
 
 // PROVIDERS
 import { UserContext } from "../provider/user-provider";
@@ -38,12 +41,14 @@ export const Post: React.FC<{
   displayComment?: boolean;
   clickable?: boolean;
   onPostAdded?: Parameters<typeof Comment>["0"]["onPostAdded"];
-  onPostDeleted?: () => unknown;
+  onPostEdited?: (post: ServerPost) => void;
+  onPostDeleted?: (post: ServerPost) => void;
 }> = ({
   post,
   asPostComment,
   displayComment,
   onPostAdded,
+  onPostEdited,
   onPostDeleted,
   clickable,
 }) => {
@@ -52,6 +57,8 @@ export const Post: React.FC<{
 
   // HOOKS
   const router = useRouter();
+  const [isCommentOpen, setIsCommentOpen] = useState(!!displayComment);
+  const [isEditing, setIsEditing] = useState(false);
   const voteMutation = api.post.vote.useMutation({
     onSuccess: async (data) => {
       if (!data) return;
@@ -61,13 +68,9 @@ export const Post: React.FC<{
       post._count = data?._count;
     },
   });
-  const [isCommentOpen, setIsCommentOpen] = useState(!!displayComment);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isDeleted, setIsDeleted] = useState(false);
   const deletePost = api.post.delete.useMutation({
     onSuccess: () => {
-      setIsDeleted(true);
-      onPostDeleted?.();
+      onPostDeleted?.(post);
     },
   });
 
@@ -99,15 +102,25 @@ export const Post: React.FC<{
     setIsCommentOpen(!isCommentOpen);
   };
 
-  const onPostAddedAddon: typeof onPostAdded = (val) => {
-    onPostAdded?.(val);
-    setIsEditing(false);
+  const onPostAddedAddon: typeof onPostAdded = (newPost) => {
+    onPostAdded?.(newPost);
 
     setIsCommentOpen(!!displayComment);
   };
 
+  const onPostEditedAddon: typeof onPostAdded = (editedPost) => {
+    onPostEdited?.(editedPost);
+
+    post.title = editedPost.title;
+    post.text = editedPost.text;
+    post.updatedAt = editedPost.updatedAt;
+
+    setIsEditing(false);
+    setIsCommentOpen(!!displayComment);
+  };
+
   const onClickContent = () => {
-    if (!clickable || deletePost.isLoading) return;
+    if (!clickable || isEditing || deletePost.isLoading) return;
     router.push(`/post/${post.id}`, { scroll: false });
   };
 
@@ -152,7 +165,7 @@ export const Post: React.FC<{
   return (
     <div>
       <Card
-        aria-disabled={deletePost.isLoading || isDeleted}
+        aria-disabled={deletePost.isLoading}
         className={`flex border-x-0 border-t-0 px-1 transition-colors hover:bg-gray-50 aria-disabled:pointer-events-none aria-disabled:opacity-80 ${asPostComment ? "flex-col-reverse border-0" : ""}`}
       >
         {!isEditing && (
@@ -287,7 +300,11 @@ export const Post: React.FC<{
 
           {!isEditing && (
             <CardContent className={`pl-4 ${asPostComment ? "pb-3" : "pb-10"}`}>
-              {post.text}
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: post.text.replace(/\n/g, "<br>"),
+                }}
+              />
             </CardContent>
           )}
         </div>
@@ -298,6 +315,7 @@ export const Post: React.FC<{
           forPost={post}
           forEdition={isEditing}
           onPostAdded={onPostAddedAddon}
+          onPostEdited={onPostEditedAddon}
         />
       )}
     </div>

@@ -1,8 +1,5 @@
-import { type User, clerkClient } from "@clerk/nextjs/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
 
 import {
   createTRPCRouter,
@@ -10,90 +7,16 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 
-// TYPES
-import { type Post } from "@prisma/client";
-
 // UTILS
 import {
+  addUserDataToPosts,
+  addUserDataToRecursivePosts,
   generateNestedComments,
   getVotes,
+  ratelimiter,
   textSanitizer,
   type RecursivePostRes,
 } from "~/lib/server-utils";
-
-/**
- * @originalAuthor t3dotgg | https://github.com/t3dotgg
- * @source https://github.com/t3dotgg/chirp/blob/main/src/server/api/routers/posts.ts#L16
- */
-const addUserDataToPosts = async <T extends Post>(
-  posts: T[],
-  userId?: string | null,
-) => {
-  const userIds = userId ? [userId] : posts.map((post) => post.authorId);
-
-  const users = await clerkClient.users.getUserList({
-    userId: userIds,
-    limit: 110,
-  });
-
-  return posts.map((post) => {
-    const author = users.find((user) => user.id === post.authorId);
-
-    return {
-      ...post,
-      author: {
-        id: author?.id,
-        username: author?.username ?? author?.firstName,
-        imageUrl: author?.imageUrl,
-      },
-    };
-  });
-};
-
-const addUserDataToRecursivePosts = async (post: RecursivePostRes) => {
-  const userIds: string[] = [];
-
-  const postMapper = (_: RecursivePostRes) => {
-    if (typeof _.authorId === "string" && !userIds.includes(_.authorId))
-      userIds.push(_.authorId);
-
-    if (_.comments && !!_.comments.length) _.comments.map(postMapper);
-
-    return;
-  };
-  postMapper(post);
-
-  const users: Record<
-    string,
-    Pick<User, "id" | "username" | "imageUrl"> & { username: string }
-  > = {};
-  (
-    await clerkClient.users.getUserList({
-      userId: userIds,
-      limit: 110,
-    })
-  ).map((user) => {
-    users[user.id] = {
-      id: user.id,
-      imageUrl: user.imageUrl,
-      username: user.username ?? user.firstName ?? "Unknown",
-    };
-  });
-  return { post, users };
-};
-
-/**
- * @originalAuthor t3dotgg | https://github.com/t3dotgg
- * @source https://github.com/t3dotgg/chirp/blob/main/src/server/api/routers/posts.ts#L16
- *
- * @description Create a new ratelimiter, that allows 3 requests per 1 minute
- */
-const ratelimiter = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(3, "1 m"),
-  analytics: true,
-  prefix: "@upstash/ratelimit/reddit-clone",
-});
 
 export const postRouter = createTRPCRouter({
   create: protectedProcedure

@@ -3,14 +3,14 @@
 import { type NextPage } from "next";
 import NextError from "next/error";
 import { unstable_noStore as noStore } from "next/cache";
-import { useContext, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useContext, useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 
 // HELPERS
 import { api } from "~/trpc/react";
 
 // TYPES
-import { type RecursivePostRes } from "~/server/api/routers/post";
+import { type RecursivePostRes } from "~/lib/server-utils";
 
 // PROVIDER
 import { UserContext } from "~/components/provider/user-provider";
@@ -19,12 +19,7 @@ import { UserContext } from "~/components/provider/user-provider";
 import { Page } from "~/components/layout/Page";
 import { PageHeader } from "~/components/common/PageHeader";
 import { Post } from "~/components/common/Post";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "~/components/ui/accordion";
+import CommentTree from "~/components/common/CommentTree";
 
 const PostPage: NextPage = () => {
   noStore();
@@ -34,60 +29,71 @@ const PostPage: NextPage = () => {
   if (typeof params.post !== "string" || !/^[0-9]+$/gi.test(params.post))
     throw new NextError({ title: "Not found", statusCode: 404 });
 
-  // DATA
-  const getRecursivePosts = api.post.getOne.useQuery({
-    id: Number(params.post),
-  });
-
   // HOOKS
   const currentUser = useContext(UserContext);
-
-  // LOCAL COMPONENTS
-  const DisplayComments = (_: { data?: RecursivePostRes[] }) => {
-    return (
-      <Accordion
-        type="multiple"
-        defaultValue={Array.from(Array(_.data?.length ?? 0).keys()).map((key) =>
-          key.toString(),
-        )}
-        className="mb-0 py-0"
-      >
-        {_.data?.map((post, id) => (
-          <AccordionItem
-            value={id.toString()}
-            key={id}
-            defaultChecked
-            className="border-b-0"
-            aria-expanded
-          >
-            <AccordionTrigger
-              className="items-start py-0"
-              aria-colcount={post.comments?.length ?? 0}
-            >
-              <div className="flex-1 text-left">
-                <Post
-                  post={post}
-                  asPostComment
-                  onPostAdded={() => getRecursivePosts.refetch()}
-                  onPostDeleted={() => getRecursivePosts.refetch()}
-                />
-              </div>
-            </AccordionTrigger>
-
-            {!!post.comments?.length && (
-              <AccordionContent className="ml-8 pb-0">
-                <DisplayComments data={post.comments} />
-              </AccordionContent>
-            )}
-          </AccordionItem>
-        ))}
-      </Accordion>
-    );
-  };
+  const router = useRouter();
+  const getRecursivePosts = api.post.getOne.useQuery(
+    {
+      id: Number(params.post),
+    },
+    { enabled: false },
+  );
+  const [postList, setPostList] = useState<RecursivePostRes | undefined>(
+    undefined,
+  );
+  const [postCommentList, setPostCommentList] = useState<RecursivePostRes[]>(
+    [],
+  );
 
   // METHODS
-  const onPostAdded = async () => await getRecursivePosts.refetch();
-  const onPostDeleted = () => getRecursivePosts.refetch();
+  const onMainCommentAdded: Parameters<typeof Post>[0]["onPostAdded"] = (
+    post,
+  ) => {
+    if (!currentUser || !postList) return;
+
+    setPostCommentList([
+      {
+        ...post,
+        upVotes: [],
+        downVotes: [],
+        _count: {
+          upVotes: 0,
+          downVotes: 0,
+        },
+        author: {
+          id: currentUser.id,
+          imageUrl: currentUser.imageUrl,
+          username:
+            currentUser.username ??
+            currentUser.firstName ??
+            currentUser.lastName ??
+            "Unknown",
+        },
+        comments: [],
+      },
+      ...postCommentList,
+    ]);
+  };
+  const onMainPostDeleted = () => {
+    router.replace("/");
+  };
+  const onCommentTreeStateChange: Parameters<
+    typeof CommentTree
+  >[0]["onStateChange"] = (newData) => {
+    setPostCommentList([]);
+    setTimeout(() => setPostCommentList(newData), 0);
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      await getRecursivePosts.refetch().then((res) => {
+        setPostList(res.data?.post);
+        setPostCommentList(res.data?.post.comments ?? []);
+      });
+    };
+    void init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (getRecursivePosts.error) {
@@ -103,24 +109,29 @@ const PostPage: NextPage = () => {
     <Page isLoading={getRecursivePosts.isLoading}>
       <PageHeader />
 
-      {getRecursivePosts.data && (
+      {postList && getRecursivePosts.data && (
         <>
           <Post
             post={{
-              ...getRecursivePosts.data.post,
-              author:
-                getRecursivePosts.data.users[
-                  getRecursivePosts.data.post.authorId
-                ],
+              ...postList,
+              author: getRecursivePosts.data.users[postList.authorId],
             }}
             displayComment={!!currentUser?.id}
-            onPostAdded={onPostAdded}
-            onPostDeleted={onPostDeleted}
+            onPostAdded={onMainCommentAdded}
+            onPostDeleted={onMainPostDeleted}
           />
 
           <section className="pt-10">
             <h2 className="dark:text-gray-50">All comments</h2>
-            {DisplayComments({ data: getRecursivePosts.data.post.comments })}
+            {
+              <CommentTree
+                props={{
+                  comments: postCommentList,
+                  users: getRecursivePosts.data.users,
+                }}
+                onStateChange={onCommentTreeStateChange}
+              />
+            }
           </section>
         </>
       )}

@@ -3,7 +3,7 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { useParams } from "next/navigation";
 import NextError from "next/error";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 
 // HELPERS
 import { api } from "~/trpc/react";
@@ -19,17 +19,24 @@ import { Post } from "~/components/common/Post";
 const Home = () => {
   noStore();
 
-  // DATA
+  // HOOKS
   const params = useParams<{ user: string }>();
   const currentUser = useContext(UserContext);
+  const getPostList = api.post.getAll.useQuery(
+    { byAuthorId: params.user },
+    { enabled: false },
+  );
+  const [postList, setPostList] = useState<
+    Exclude<(typeof getPostList)["data"], undefined>
+  >([]);
 
   if (typeof params.user !== "string")
     throw new NextError({ title: "Not found", statusCode: 404 });
 
-  const getPostList = api.post.getAll.useQuery({ byAuthorId: params.user });
-
   // METHODS
-  const onPostDeleted = () => getPostList.refetch();
+  const onPostDeleted: Parameters<typeof Post>[0]["onPostDeleted"] = (post) => {
+    setPostList(postList.filter((p) => post.id !== p.id));
+  };
 
   useEffect(() => {
     if (getPostList.error) {
@@ -41,8 +48,18 @@ const Home = () => {
     }
   }, [getPostList.error, getPostList.error?.data]);
 
+  useEffect(() => {
+    const init = async () => {
+      await getPostList.refetch().then((res) => {
+        setPostList(res.data ?? []);
+      });
+    };
+    void init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <Page isLoading={getPostList.isLoading || !getPostList.data}>
+    <Page isLoading={!getPostList.data}>
       <PageHeader
         label={
           getPostList.data?.length &&
@@ -53,11 +70,12 @@ const Home = () => {
         }
       />
 
-      {getPostList.data?.map((item) => (
+      {postList.map((post) => (
         <Post
-          post={item}
-          key={item.id.toString()}
+          post={post}
+          key={post.id.toString()}
           onPostDeleted={onPostDeleted}
+          clickable
         />
       ))}
     </Page>

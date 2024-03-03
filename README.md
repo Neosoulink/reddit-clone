@@ -22,6 +22,7 @@ Simple Reddit clone.
 - User Signs
 - Responsive design
 - Post Edition/Deletion
+- Full Typesafe
 
 ## 🛠 How to start
 
