@@ -4,12 +4,13 @@ Simple Reddit clone.
 
 ## Live demo 👉 [Reddit-clone-nine-xi](https://reddit-clone-nine-xi.vercel.app/)
 
+### Dev live demo 👉 [Reddit-clone-dev](https://reddit-clone-git-dev-neodarksoulink.vercel.app/)
+
 ### Screenshots
 
 | Home  | Comments | Responsive | Dark mode |
 | ------------- | ------------- | ------------- | ------------- |
 | ![image](https://github.com/Neosoulink/reddit-clone/assets/44310540/a0014b3e-34e1-460f-b592-029a9749c8ec) | ![image](https://github.com/Neosoulink/reddit-clone/assets/44310540/3f6f7ce6-411e-41ad-b20b-e224f1c4577b) | ![image](https://github.com/Neosoulink/reddit-clone/assets/44310540/c8be8010-9345-491a-b038-3a5611040687) | ![image](https://github.com/Neosoulink/reddit-clone/assets/44310540/e09cf01b-120e-42fa-9acd-0e090e6ca940) |
-
 
 ## 📝 Features
 
