@@ -24,7 +24,7 @@ const Home = () => {
   const currentUser = useContext(UserContext);
   const getPostList = api.post.getAll.useQuery(
     { byAuthorId: params.user },
-    { enabled: false },
+    { enabled: false, trpc: { abortOnUnmount: true } },
   );
   const [postList, setPostList] = useState<
     Exclude<(typeof getPostList)["data"], undefined>

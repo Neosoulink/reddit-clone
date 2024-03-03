@@ -20,7 +20,10 @@ const Home = () => {
 
   // HOOKS
   const currentUser = useContext(UserContext);
-  const getPostList = api.post.getAll.useQuery(null, { enabled: false });
+  const getPostList = api.post.getAll.useQuery(null, {
+    enabled: false,
+    trpc: { abortOnUnmount: true },
+  });
   const [postList, setPostList] = useState<
     Exclude<(typeof getPostList)["data"], undefined>
   >([]);

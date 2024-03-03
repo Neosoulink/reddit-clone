@@ -36,7 +36,7 @@ const PostPage: NextPage = () => {
     {
       id: Number(params.post),
     },
-    { enabled: false },
+    { enabled: false, trpc: { abortOnUnmount: true } },
   );
   const [postList, setPostList] = useState<RecursivePostRes | undefined>(
     undefined,
