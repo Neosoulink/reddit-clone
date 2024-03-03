@@ -79,9 +79,12 @@ const PostPage: NextPage = () => {
   };
   const onCommentTreeStateChange: Parameters<
     typeof CommentTree
-  >[0]["onStateChange"] = (newData) => {
+  >[0]["onStateChange"] = () => {
+    const freezedCommentList = JSON.parse(
+      JSON.stringify(postCommentList),
+    ) as typeof postCommentList;
     setPostCommentList([]);
-    setTimeout(() => setPostCommentList(newData), 0);
+    setTimeout(() => setPostCommentList(freezedCommentList), 0);
   };
 
   useEffect(() => {

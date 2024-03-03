@@ -21,7 +21,7 @@ const CommentTree: React.FC<{
     comments?: RecursivePostRes[];
     users: Record<string, PostUser>;
   };
-  onStateChange?: (newData: RecursivePostRes[]) => void;
+  onStateChange?: () => void;
 }> = ({ props, onStateChange }) => {
   // HOOKS
   const currentUser = useContext(UserContext);
@@ -54,16 +54,19 @@ const CommentTree: React.FC<{
       },
       ...(currentPost.comments ?? []),
     ];
-    props.comments = currentPost.comments;
-    onStateChange?.(props.comments);
+    onStateChange?.();
   };
 
   const onCommentDeleted: Parameters<typeof Post>[0]["onPostDeleted"] = (
-    post,
+    oldPost,
   ) => {
     if (props.comments) {
-      props.comments = props.comments.filter((p) => post.id !== p.id);
-      onStateChange?.(props.comments);
+      const clone = JSON.parse(
+        JSON.stringify(props.comments.filter((p) => oldPost.id !== p.id)),
+      ) as typeof props.comments;
+      props.comments.length = 0;
+      props.comments.push(...clone);
+      onStateChange?.();
     }
   };
 
