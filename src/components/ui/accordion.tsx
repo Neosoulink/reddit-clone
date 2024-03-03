@@ -34,10 +34,14 @@ const AccordionTrigger = React.forwardRef<
       {...props}
     >
       {children}
-      {typeof props["aria-colcount"] === "number" &&
-        props["aria-colcount"] > 0 && (
-          <ChevronDown className="absolute right-0 top-0 mr-1 mt-1 h-4 w-4 shrink-0 transition-transform duration-200" />
-        )}
+      {!props["aria-hidden"] && (
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 shrink-0 transition-transform duration-200",
+            props["aria-details"],
+          )}
+        />
+      )}
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
 ));

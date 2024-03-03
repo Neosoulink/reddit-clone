@@ -9,12 +9,7 @@ import { UserContext } from "../provider/user-provider";
 
 // COMPONENTS
 import Post from "./Post";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "../ui/accordion";
+import { Accordion, AccordionContent, AccordionItem } from "../ui/accordion";
 
 const CommentTree: React.FC<{
   props: {
@@ -90,19 +85,13 @@ const CommentTree: React.FC<{
             className="border-b-0"
             aria-expanded
           >
-            <AccordionTrigger
-              className="items-start py-0"
-              aria-colcount={post.comments?.length ?? 0}
-            >
-              <div className="flex-1 text-left">
-                <Post
-                  post={post}
-                  asPostComment
-                  onPostAdded={(newReply) => onReplyAdded(newReply, post)}
-                  onPostDeleted={onCommentDeleted}
-                />
-              </div>
-            </AccordionTrigger>
+            <Post
+              post={post}
+              useAccordion={!!post.comments?.length}
+              asPostComment
+              onPostAdded={(newReply) => onReplyAdded(newReply, post)}
+              onPostDeleted={onCommentDeleted}
+            />
 
             {!!post.comments?.length && (
               <AccordionContent className="ml-8 pb-0">
