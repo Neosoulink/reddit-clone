@@ -4,18 +4,26 @@ Simple Reddit clone.
 
 ## Live demo 👉 [Reddit-clone-nine-xi](https://reddit-clone-nine-xi.vercel.app/)
 
+### Dev live demo 👉 [Reddit-clone-dev](https://reddit-clone-git-dev-neodarksoulink.vercel.app/)
+
 ### Screenshots
 
-| Home  | Comments | Responsive |
-| ------------- | ------------- | ------------- |
-| ![image](https://github.com/Neosoulink/reddit-clone/assets/44310540/a0014b3e-34e1-460f-b592-029a9749c8ec) | ![image](https://github.com/Neosoulink/reddit-clone/assets/44310540/3f6f7ce6-411e-41ad-b20b-e224f1c4577b) | ![image](https://github.com/Neosoulink/reddit-clone/assets/44310540/c8be8010-9345-491a-b038-3a5611040687) |
+| Home  | Comments | Responsive | Dark mode |
+| ------------- | ------------- | ------------- | ------------- |
+| ![image](https://github.com/Neosoulink/reddit-clone/assets/44310540/a0014b3e-34e1-460f-b592-029a9749c8ec) | ![image](https://github.com/Neosoulink/reddit-clone/assets/44310540/3f6f7ce6-411e-41ad-b20b-e224f1c4577b) | ![image](https://github.com/Neosoulink/reddit-clone/assets/44310540/c8be8010-9345-491a-b038-3a5611040687) | ![image](https://github.com/Neosoulink/reddit-clone/assets/44310540/e09cf01b-120e-42fa-9acd-0e090e6ca940) |
 
 ## 📝 Features
 
-- Public post reading.
+- Public post reading
 - Post creation
-- Nested commentary system
+- Nested commentary system (with accordion)
 - Voting system
+- Dark mode
+- Rate limiter
+- User Signs
+- Responsive design
+- Post Edition/Deletion
+- Full Typesafe
 
 ## 🛠 How to start
 
@@ -30,6 +38,9 @@ This app needs some `.env` config props, make you sure to provide:
 - `DIRECT_URL`: Used for migrations. You can remove it if you plan to use another provider. (make sure to remove it in `prisma.schema`).
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY`
+- `UPSTASH_REDIS_REST_URL` _(new)_: Used for rate limiter, available on your [console.upstash.com/redis/](https://console.upstash.com/redis/)
+- `UPSTASH_REDIS_REST_TOKEN` _(new)_
+
 
 After the above is done, you can proceed with the installation and the application launch:
 

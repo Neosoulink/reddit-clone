@@ -1,43 +1,95 @@
 "use client";
 
 import { unstable_noStore as noStore } from "next/cache";
+import NextError from "next/error";
+import { useContext, useEffect, useState } from "react";
+
+// HELPERS
 import { api } from "~/trpc/react";
-import { useUser } from "@clerk/nextjs";
+
+// PROVIDERS
+import { UserContext } from "~/components/provider/user-provider";
 
 // COMPONENTS
+import { Page } from "~/components/layout/Page";
 import { Post } from "~/components/common/Post";
 import { Comment } from "~/components/common/Comment";
-import SkeletonLoader from "~/components/common/SkeletonLoader";
 
 const Home = () => {
   noStore();
 
-  // DATA
-  const getPostList = api.post.getAll.useQuery(null);
-
   // HOOKS
-  const { user } = useUser();
+  const currentUser = useContext(UserContext);
+  const getPostList = api.post.getAll.useQuery(null, {
+    enabled: false,
+    trpc: { abortOnUnmount: true },
+  });
+  const [postList, setPostList] = useState<
+    Exclude<(typeof getPostList)["data"], undefined>
+  >(getPostList.data ?? []);
+
+  // METHODS
+  const onPostAdded: Parameters<typeof Post>[0]["onPostAdded"] = (post) => {
+    if (!currentUser) return;
+    setPostList([
+      {
+        ...post,
+        upVotes: [],
+        downVotes: [],
+        _count: {
+          upVotes: 0,
+          downVotes: 0,
+        },
+        author: {
+          id: currentUser.id,
+          imageUrl: currentUser.imageUrl,
+          username: currentUser.username,
+        },
+      },
+      ...postList,
+    ]);
+  };
+  const onPostDeleted: Parameters<typeof Post>[0]["onPostDeleted"] = (post) => {
+    setPostList(postList.filter((p) => post.id !== p.id));
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      await getPostList.refetch().then((res) => {
+        setPostList(res.data ?? []);
+      });
+    };
+    void init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (getPostList.error) {
+      throw new NextError({
+        title: getPostList.error.message ?? "Something went wrong!",
+        statusCode: getPostList.error.data?.httpStatus ?? 500,
+        withDarkMode: false,
+      });
+    }
+  }, [getPostList.error, getPostList.error?.data]);
 
   return (
-    <main className="min-h-screen">
-      {getPostList.isLoading ? (
-        <div className="space-y-4">
-          {["1", "2", "3", "4", "5"].map((n) => (
-            <SkeletonLoader key={n} />
-          ))}
+    <Page isLoading={getPostList.isLoading || !postList}>
+      {currentUser?.id && (
+        <div className="mb-10">
+          <Comment onPostAdded={onPostAdded} />
         </div>
-      ) : (
-        <>
-          {user?.id && (
-            <Comment onPostAdded={async () => await getPostList.refetch()} />
-          )}
-
-          {getPostList.data?.map((item) => (
-            <Post post={item} key={item.id.toString()} />
-          ))}
-        </>
       )}
-    </main>
+
+      {postList?.map((item) => (
+        <Post
+          post={item}
+          key={item.id.toString()}
+          onPostDeleted={onPostDeleted}
+          clickable
+        />
+      ))}
+    </Page>
   );
 };
 

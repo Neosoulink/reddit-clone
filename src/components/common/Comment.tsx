@@ -1,14 +1,18 @@
 "use client";
 
-import React from "react";
+import React, { useContext, useEffect } from "react";
+import NextError from "next/error";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useUser } from "@clerk/nextjs";
+import { type Post } from "@prisma/client";
 
 // HELPERS
 import { api } from "~/trpc/react";
-import { type api as apiServer } from "~/trpc/server";
+
+// PROVIDERS
+import { UserContext } from "../provider/user-provider";
 
 // COMPONENTS
 import { Card, CardContent, CardFooter } from "../ui/card";
@@ -24,70 +28,117 @@ import { Input } from "../ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Textarea } from "../ui/textarea";
 import { Icon } from "../Icon";
-import { useRouter } from "next/navigation";
 
 export const Comment: React.FC<{
-  forPost?: number;
-  onPostAdded?: (
-    post: Exclude<
-      Awaited<ReturnType<typeof apiServer.post.create.mutate>>,
-      undefined
-    >,
-  ) => void;
-}> = ({ forPost, onPostAdded }) => {
+  forPost?: Post;
+  forEdition?: boolean;
+  onPostAdded?: (post: Post) => void;
+  onPostEdited?: (post: Post) => void;
+}> = ({ forPost, forEdition, onPostAdded, onPostEdited }) => {
   // DATA
   const formSchema = z.object({
-    ...(typeof forPost === "number"
+    ...(typeof forPost?.id === "number"
       ? {}
       : { title: z.string().min(2).max(255) }),
     text: z.string().min(1).max(2000),
   });
 
+  // METHODS
+  const onSuccess = (res: Post) => {
+    if (!res) return;
+    form.reset();
+
+    if (forEdition && forPost?.id) {
+      onPostEdited?.(res);
+      return;
+    }
+    onPostAdded?.(res);
+  };
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!currentUser) return router.push("/sign-in");
+    if (forEdition && forPost?.id) {
+      editPost.mutate({
+        ...values,
+        title: typeof values.title === "string" ? values.title : null,
+        id: forPost.id,
+      });
+      return;
+    }
+    createPost.mutate({
+      ...values,
+      title: typeof values.title === "string" ? values.title : null,
+      postId: forPost?.id ?? null,
+    });
+  };
+
+  const onClickForm = (e: React.MouseEvent<HTMLFormElement, MouseEvent>) => {
+    e.stopPropagation();
+  };
+
   // HOOKS
   const router = useRouter();
-  const { user, isSignedIn } = useUser();
+  const currentUser = useContext(UserContext);
   const createPost = api.post.create.useMutation({
-    onSuccess: (res) => {
-      if (!res || !onPostAdded) return;
-      onPostAdded(res);
-      form.reset();
-    },
+    onSuccess,
   });
-
-  // METHODS
+  const editPost = api.post.edit.useMutation({
+    onSuccess,
+  });
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: typeof forPost === "number" ? undefined : "",
+      title: typeof forPost?.id === "number" ? undefined : "",
       text: "",
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!isSignedIn) return router.push("/sign-in");
-    createPost.mutate({
-      ...values,
-      title: typeof values.title === "string" ? values.title : null,
-      postId: forPost ?? null,
-    });
-  };
+  useEffect(() => {
+    form.reset();
+
+    if (forEdition && forPost) {
+      if (forPost.title)
+        form.setValue("title", forPost.title as unknown as never);
+      if (forPost.text) form.setValue("text", forPost.text as unknown as never);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forEdition]);
+
+  useEffect(() => {
+    if (createPost.error) {
+      throw new NextError({
+        title: createPost.error.message ?? "Something went wrong!",
+        statusCode: createPost.error.data?.httpStatus ?? 500,
+      });
+    }
+  }, [createPost.error, createPost.error?.data]);
+
+  useEffect(() => {
+    if (editPost.error) {
+      throw new NextError({
+        title: editPost.error.message ?? "Something went wrong!",
+        statusCode: editPost.error.data?.httpStatus ?? 500,
+      });
+    }
+  }, [editPost.error, editPost.error?.data]);
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="mb-10">
+      <form onSubmit={form.handleSubmit(onSubmit)} onClick={onClickForm}>
         <Card className="p-4 shadow-lg">
           <CardContent className="mb-0 flex px-0 pb-3">
             <Avatar className="mr-2 mt-2">
               <AvatarImage
-                src={user?.imageUrl}
-                alt={user?.username ?? "Unknown"}
+                src={currentUser?.imageUrl}
+                alt={currentUser?.username ?? "Unknown"}
               />
-
-              <AvatarFallback>{(user?.username ?? "X")[0]}</AvatarFallback>
+              <AvatarFallback>
+                {(currentUser?.username ?? "X")[0]}
+              </AvatarFallback>
             </Avatar>
 
             <div className="flex flex-1 flex-col">
-              {!forPost && (
+              {!forPost?.postId && (
                 <FormField
                   control={form.control}
                   name="title"
@@ -98,6 +149,7 @@ export const Comment: React.FC<{
                           <Input
                             placeholder="Title of your post"
                             className="text-base"
+                            autoFocus
                             {...{
                               ...field,
                               value:
@@ -118,9 +170,12 @@ export const Comment: React.FC<{
                 control={form.control}
                 name="text"
                 render={({ field }) => (
-                  <FormItem className="border-b border-b-gray-200 ">
+                  <FormItem className="border-b border-b-gray-200 dark:border-b-gray-700">
                     <FormControl>
                       <Textarea
+                        onLoad={(e) => {
+                          if (forPost?.postId) e.currentTarget.focus();
+                        }}
                         placeholder={
                           forPost
                             ? "Comment your thoughts"
@@ -141,12 +196,12 @@ export const Comment: React.FC<{
             <Button
               type="submit"
               className="rounded-xl"
-              disabled={createPost.isLoading}
+              disabled={createPost.isLoading || editPost.isLoading}
             >
-              {createPost.isLoading && (
+              {(createPost.isLoading || editPost.isLoading) && (
                 <Icon type="SPINNER" className="mr-1 h-4 w-4" />
               )}
-              {forPost ? "Comment" : "Post"}
+              {forEdition ? "Update" : forPost ? "Comment" : "Post"}
             </Button>
           </CardFooter>
         </Card>
